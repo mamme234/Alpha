@@ -1,6 +1,79 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+  "builds": [
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.css",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/landing.html"
+    },
+    {
+      "src": "/userplatform",
+      "dest": "/userplatform.html"
+    },
+    {
+      "src": "/developersplatform",
+      "dest": "/developersplatform.html"
+    },
+    {
+      "src": "/codespace",
+      "dest": "/codespace.html"
+    },
+    {
+      "src": "/projectmanager",
+      "dest": "/projectmanager.html"
+    },
+    {
+      "src": "/deployment",
+      "dest": "/deployment.html"
+    },
+    {
+      "src": "/hosting",
+      "dest": "/hosting.html"
+    },
+    {
+      "src": "/dbstorage",
+      "dest": "/dbstorage.html"
+    },
+    {
+      "src": "/env",
+      "dest": "/env.html"
+    },
+    {
+      "src": "/logs",
+      "dest": "/logs.html"
+    },
+    {
+      "src": "/apppublishing",
+      "dest": "/apppublishing.html"
+    },
+    {
+      "src": "/logo",
+      "dest": "/logo.html"
+    },
+    {
+      "src": "/main.js",
+      "dest": "/main.js"
+    },
+    {
+      "src": "/style.css",
+      "dest": "/style.css"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/landing.html"
+    }
   ]
 }
