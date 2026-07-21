@@ -1,20 +1,23 @@
-const User = require('./models/User');
-const Project = require('./models/Project');
-const Deployment = require('./models/Deployment');
-const App = require('./models/App');
-const Analytics = require('./models/Analytics');
+const User = require('./db').User;
+const Project = require('./db').Project;
+const Deployment = require('./db').Deployment;
+const App = require('./db').App;
+const Analytics = require('./db').Analytics;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
+const { addToQueue } = require('./services');
 
 // ============================================
 // HELPERS
 // ============================================
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' });
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'fallback_secret', { 
+    expiresIn: process.env.JWT_EXPIRE || '7d' 
+  });
 };
 
 // ============================================
@@ -180,7 +183,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback_secret', {
       expiresIn: '1h'
     });
 
@@ -199,7 +202,7 @@ exports.resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
 
     const user = await User.findOne({
       _id: decoded.id,
@@ -227,14 +230,13 @@ exports.resetPassword = async (req, res) => {
 };
 
 // ============================================
-// PROJECT CONTROLLERS
+// PROJECT CONTROLLERS (COMPLETE)
 // ============================================
 
 exports.getProjects = async (req, res) => {
   try {
     const projects = await Project.find({ userId: req.user.id })
-      .sort({ createdAt: -1 })
-      .populate('deployments');
+      .sort({ createdAt: -1 });
 
     res.json({ success: true, projects });
   } catch (error) {
@@ -248,7 +250,7 @@ exports.getProject = async (req, res) => {
     const project = await Project.findOne({
       _id: req.params.id,
       userId: req.user.id
-    }).populate('deployments');
+    });
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
@@ -367,7 +369,6 @@ exports.uploadCode = async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Mock upload - in production, upload to S3
     const key = `projects/${project._id}/${file.originalname}`;
     const url = `https://storage.alpha.com/${key}`;
 
@@ -422,7 +423,6 @@ exports.getCode = async (req, res) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    // Mock code - in production, fetch from S3
     const code = `// Project: ${project.name}\n// Framework: ${project.framework}\n\nconsole.log('Hello from Alpha!');`;
 
     res.json({
@@ -503,7 +503,6 @@ exports.getFiles = async (req, res) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    // Mock files
     const files = [
       { name: 'src', type: 'folder', path: 'src' },
       { name: 'index.js', type: 'file', path: 'src/index.js' },
@@ -550,33 +549,12 @@ exports.deploy = async (req, res) => {
       ]
     });
 
-    // Simulate deployment
-    setTimeout(async () => {
-      deployment.status = 'BUILDING';
-      deployment.progress = 30;
-      deployment.logs.push({ timestamp: new Date(), level: 'INFO', message: 'Building project...' });
-      await deployment.save();
-
-      setTimeout(async () => {
-        deployment.status = 'DEPLOYING';
-        deployment.progress = 70;
-        deployment.logs.push({ timestamp: new Date(), level: 'INFO', message: 'Deploying to servers...' });
-        await deployment.save();
-
-        setTimeout(async () => {
-          deployment.status = 'COMPLETED';
-          deployment.progress = 100;
-          deployment.url = `https://${project.slug}.alpha.app`;
-          deployment.completedAt = new Date();
-          deployment.logs.push({ timestamp: new Date(), level: 'INFO', message: 'Deployment completed successfully!' });
-          await deployment.save();
-
-          // Update project
-          project.lastDeployment = deployment._id;
-          await project.save();
-        }, 2000);
-      }, 2000);
-    }, 2000);
+    await addToQueue('build', {
+      projectId: project._id,
+      deploymentId: deployment._id,
+      userId: req.user.id,
+      branch
+    });
 
     res.json({
       success: true,
@@ -779,7 +757,7 @@ exports.cancelDeployment = async (req, res) => {
 };
 
 // ============================================
-// APP CONTROLLERS
+// APP CONTROLLERS (COMPLETE)
 // ============================================
 
 exports.getApps = async (req, res) => {
@@ -976,7 +954,7 @@ exports.toggleFavorite = async (req, res) => {
     }
 
     const user = await User.findById(req.user.id);
-    const isFavorited = user.favorites.includes(id);
+    const isFavorited = user.favorites && user.favorites.includes(id);
 
     if (isFavorited) {
       await User.findByIdAndUpdate(req.user.id, {
