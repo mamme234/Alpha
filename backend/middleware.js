@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-const User = require('./models/User');
+const User = require('./db').User;
+const rateLimit = require('express-rate-limit');
+const multer = require('multer');
 
 // ============================================
 // AUTH MIDDLEWARE
@@ -36,16 +38,14 @@ exports.protect = async (req, res, next) => {
 // RATE LIMITING
 // ============================================
 
-const rateLimit = require('express-rate-limit');
-
 exports.limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Too many requests, please try again later.'
 });
 
 exports.strictLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   max: 10,
   message: 'Too many requests, please try again later.'
 });
@@ -57,19 +57,16 @@ exports.strictLimiter = rateLimit({
 exports.errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
-  // Mongoose validation error
   if (err.name === 'ValidationError') {
     const messages = Object.values(err.errors).map(e => e.message);
     return res.status(400).json({ error: messages.join(', ') });
   }
 
-  // Mongoose duplicate key error
   if (err.code === 11000) {
     const field = Object.keys(err.keyPattern)[0];
     return res.status(400).json({ error: `${field} already exists` });
   }
 
-  // JWT error
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({ error: 'Invalid token' });
   }
@@ -78,7 +75,6 @@ exports.errorHandler = (err, req, res, next) => {
     return res.status(401).json({ error: 'Token expired' });
   }
 
-  // Default error
   const status = err.status || 500;
   res.status(status).json({
     error: err.message || 'Internal server error'
@@ -88,8 +84,6 @@ exports.errorHandler = (err, req, res, next) => {
 // ============================================
 // UPLOAD MIDDLEWARE
 // ============================================
-
-const multer = require('multer');
 
 const storage = multer.memoryStorage();
 
@@ -102,10 +96,11 @@ const fileFilter = (req, file, cb) => {
     'text/html',
     'text/css',
     'application/zip',
-    'application/x-zip-compressed'
+    'application/x-zip-compressed',
+    'application/octet-stream'
   ];
   
-  if (allowedTypes.includes(file.mimetype)) {
+  if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.js') || file.originalname.endsWith('.json')) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type'), false);
@@ -115,7 +110,7 @@ const fileFilter = (req, file, cb) => {
 exports.upload = multer({
   storage: storage,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB
+    fileSize: 50 * 1024 * 1024
   },
   fileFilter: fileFilter
 });
