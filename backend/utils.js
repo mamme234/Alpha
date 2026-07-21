@@ -1,20 +1,27 @@
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
 // ============================================
 // DATABASE CONNECTION
 // ============================================
 
-const mongoose = require('mongoose');
-
 exports.connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/alpha', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
     console.error(`MongoDB Connection Error: ${error.message}`);
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️  Running without database - using in-memory storage');
+      return null;
+    }
     process.exit(1);
   }
 };
@@ -23,17 +30,15 @@ exports.connectDB = async () => {
 // HELPERS
 // ============================================
 
-const jwt = require('jsonwebtoken');
-
 exports.generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'fallback_secret', {
     expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
 
 exports.verifyToken = (token) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
   } catch (error) {
     return null;
   }
@@ -104,32 +109,38 @@ exports.isValidUrl = (url) => {
 };
 
 exports.isValidPassword = (password) => {
-  return password.length >= 6;
+  return password && password.length >= 6;
 };
 
 // ============================================
 // ENCRYPTION HELPERS
 // ============================================
 
-const crypto = require('crypto');
-
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef';
 const IV_LENGTH = 16;
 
 exports.encrypt = (text) => {
-  const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
+  try {
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
+  } catch (error) {
+    return text;
+  }
 };
 
 exports.decrypt = (text) => {
-  const parts = text.split(':');
-  const iv = Buffer.from(parts.shift(), 'hex');
-  const encryptedText = parts.join(':');
-  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
-  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
+  try {
+    const parts = text.split(':');
+    const iv = Buffer.from(parts.shift(), 'hex');
+    const encryptedText = parts.join(':');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    return text;
+  }
 };
