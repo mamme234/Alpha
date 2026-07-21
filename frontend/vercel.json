@@ -2,21 +2,25 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend/**/*.html",
+      "src": "frontend/*.html",
       "use": "@vercel/static"
     },
     {
-      "src": "frontend/**/*.js",
+      "src": "frontend/*.js",
       "use": "@vercel/static"
     },
     {
-      "src": "frontend/**/*.css",
+      "src": "frontend/*.css",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/",
+      "dest": "/frontend/landing.html"
+    },
+    {
+      "src": "/landing",
       "dest": "/frontend/landing.html"
     },
     {
@@ -72,39 +76,12 @@
       "dest": "/frontend/style.css"
     },
     {
+      "src": "/frontend/(.*)",
+      "dest": "/frontend/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/landing.html"
     }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "X-Requested-With, Content-Type, Authorization"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    }
   ]
-        }
+}
