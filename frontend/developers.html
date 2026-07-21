@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alpha — Marketplace</title>
+    <title>Alpha — Developer Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Russo+One&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -11,20 +11,15 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23667eea'/><text x='50' y='68' font-size='56' text-anchor='middle' fill='white' font-weight='bold'>A</text></svg>">
 
     <style>
-        /* Same header styles as index.html (omitted for brevity, but include in actual file) */
-        /* For brevity here, we assume you copy the <style> from index.html */
-        /* In production, you should extract header styles to style.css */
-        /* I'll keep it minimal but functional */
+        /* Same header styles as before (include full header) */
+        /* For brevity, copy the <style> block from index.html or users.html */
+        /* I'll include minimal essential styles */
         * { margin:0; padding:0; box-sizing:border-box; }
-        .header-bg { /* same as before */ }
-        /* ... include all header styles ... */
-        /* To save space, I'll reference that you copy the header styles from index.html */
-        /* But I'll include a minimal working version */
         .header-bg { position:absolute; inset:0; z-index:0; background:radial-gradient(ellipse at 50% 60%, #1a0a0a, #050505 70%); pointer-events:none; border-radius:0 0 40px 40px; }
         .header { position:fixed; top:0; left:0; right:0; z-index:1000; padding:16px 40px; background:linear-gradient(180deg, rgba(10,5,5,0.98) 60%, rgba(10,5,5,0.85) 100%); backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,0,0,0.06); transition:all 0.4s ease; }
         .header.scrolled { padding:10px 40px; background:rgba(10,5,5,0.98); border-bottom:1px solid rgba(255,0,0,0.12); box-shadow:0 4px 40px rgba(0,0,0,0.8); }
         .header-inner { max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; }
-        .logo-wrapper { display:flex; align-items:center; gap:16px; cursor:pointer; text-decoration:none; padding:4px 12px 4px 4px; border-radius:16px; transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .logo-wrapper { display:flex; align-items:center; gap:16px; cursor:pointer; text-decoration:none; padding:4px 12px 4px 4px; border-radius:16px; transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1); }
         .logo-wrapper:hover { transform:scale(1.04); background:rgba(255,0,0,0.04); }
         .logo-mark { width:52px; height:52px; flex-shrink:0; position:relative; }
         .logo-mark svg { width:100%; height:100%; display:block; filter:drop-shadow(0 0 20px rgba(255,0,0,0.08)); }
@@ -71,21 +66,15 @@
         @media (max-width:768px) { .hamburger { display:flex; } .nav { position:absolute; top:100%; left:0; right:0; flex-direction:column; background:rgba(10,5,5,0.98); backdrop-filter:blur(20px); padding:20px 24px 30px; gap:16px; border-bottom:1px solid rgba(255,0,0,0.06); transform:translateY(-120%); transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1); opacity:0; pointer-events:none; border-radius:0 0 20px 20px; } .nav.open { transform:translateY(0); opacity:1; pointer-events:all; } .nav a { font-size:16px; padding:8px 0; width:100%; text-align:center; } .nav-cta { width:100%; text-align:center; padding:12px !important; } .logo-brand { font-size:22px; } @keyframes typeBrand { to { width:120px; } } .logo-tagline { font-size:7px; letter-spacing:2.5px; } @keyframes typeTagline { to { width:135px; } } .logo-mark { width:42px; height:42px; } }
         @media (max-width:480px) { .header { padding:10px 14px; } .logo-wrapper { gap:10px; padding:2px 6px 2px 2px; } .logo-mark { width:36px; height:36px; } .logo-brand { font-size:18px; } @keyframes typeBrand { to { width:100px; } } .logo-tagline { font-size:6px; letter-spacing:2px; } @keyframes typeTagline { to { width:115px; } } }
         .page-content { padding-top:100px; min-height:100vh; }
-        .gradient-text { background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-        .app-card { transition:all 0.3s ease; cursor:pointer; }
-        .app-card:hover { transform:translateY(-4px); box-shadow:0 12px 30px rgba(0,0,0,0.1); }
-        .category-pill { transition:all 0.2s ease; cursor:pointer; padding:6px 16px; border-radius:9999px; font-size:14px; font-weight:500; background:#f3f4f6; color:#6b7280; }
-        .category-pill:hover, .category-pill.active { background:#667eea; color:white; }
-        .search-focus:focus { box-shadow:0 0 0 3px rgba(102,126,234,0.3); border-color:#667eea; outline:none; }
-        .sidebar-item { transition:all 0.2s ease; cursor:pointer; padding:8px 12px; border-radius:8px; }
-        .sidebar-item:hover { background:#f3f4f6; }
-        .sidebar-item.active { background:#eef2ff; color:#4f46e5; font-weight:600; }
-        .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .stat-card { transition:all 0.3s ease; }
+        .stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,0,0,0.08); }
+        .project-item { transition:all 0.2s ease; cursor:pointer; }
+        .project-item:hover { background:#f9fafb; }
     </style>
 </head>
 <body>
 
-    <!-- ===== HEADER (same as index) ===== -->
+    <!-- ===== HEADER ===== -->
     <header class="header" id="header">
         <div class="header-bg"></div>
         <div class="header-inner">
@@ -118,9 +107,9 @@
 
             <nav class="nav" id="nav">
                 <a href="/">Home</a>
-                <a href="/users" class="active">Marketplace</a>
-                <a href="/developers">Dashboard</a>
-                <a href="#" class="nav-cta" id="getStartedBtn">Get Started</a>
+                <a href="/users">Marketplace</a>
+                <a href="/developers" class="active">Dashboard</a>
+                <a href="#" class="nav-cta" id="newProjectBtn">+ New Project</a>
             </nav>
 
             <button class="hamburger" id="hamburger" aria-label="Toggle menu">
@@ -133,46 +122,41 @@
 
     <!-- ===== PAGE CONTENT ===== -->
     <div class="page-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex flex-col lg:flex-row gap-6">
-            <!-- Sidebar -->
-            <div class="w-full lg:w-64 flex-shrink-0">
-                <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 sticky top-24 border border-gray-200 dark:border-gray-700">
-                    <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-3">Categories</h3>
-                    <ul class="space-y-1" id="categoryList">
-                        <li class="sidebar-item active px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="all">📱 All</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Games">🎮 Games</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Education">📚 Education</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="AI">🤖 AI</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Business">💼 Business</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Finance">💰 Finance</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Health">🏥 Health</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Social">👥 Social</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Entertainment">🎬 Entertainment</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Tools">🛠️ Tools</li>
-                        <li class="sidebar-item px-3 py-2 rounded-lg text-sm cursor-pointer" data-category="Productivity">⚡ Productivity</li>
-                    </ul>
-                </div>
+        <!-- Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white dark:bg-gray-900 rounded-xl p-5 stat-card border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between"><span class="text-gray-500 text-sm">Projects</span><span class="text-2xl">📁</span></div>
+                <p class="text-3xl font-bold mt-2 dark:text-white" id="projectCount">0</p>
             </div>
+            <div class="bg-white dark:bg-gray-900 rounded-xl p-5 stat-card border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between"><span class="text-gray-500 text-sm">Deployments</span><span class="text-2xl">🚀</span></div>
+                <p class="text-3xl font-bold mt-2 dark:text-white" id="deployCount">0</p>
+            </div>
+            <div class="bg-white dark:bg-gray-900 rounded-xl p-5 stat-card border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between"><span class="text-gray-500 text-sm">Downloads</span><span class="text-2xl">📥</span></div>
+                <p class="text-3xl font-bold mt-2 dark:text-white" id="downloadCount">0</p>
+            </div>
+            <div class="bg-white dark:bg-gray-900 rounded-xl p-5 stat-card border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between"><span class="text-gray-500 text-sm">Revenue</span><span class="text-2xl">💰</span></div>
+                <p class="text-3xl font-bold mt-2 dark:text-white" id="revenueCount">$0</p>
+            </div>
+        </div>
 
-            <!-- Main Content -->
-            <div class="flex-1">
-                <div class="flex flex-wrap gap-2 mb-6">
-                    <span class="category-pill active" data-filter="trending">🔥 Trending</span>
-                    <span class="category-pill" data-filter="featured">⭐ Featured</span>
-                    <span class="category-pill" data-filter="new">✨ New</span>
-                    <span class="category-pill" data-filter="popular">📥 Popular</span>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="appGrid">
-                    <!-- Rendered by JavaScript -->
-                </div>
+        <!-- Projects -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="font-semibold dark:text-white">My Projects</h3>
+                <button class="text-sm text-indigo-600 hover:underline" id="newProjectBtn2">+ New Project</button>
+            </div>
+            <div class="divide-y divide-gray-200 dark:divide-gray-700" id="projectList">
+                <!-- Rendered by JavaScript -->
             </div>
         </div>
     </div>
 
     <script src="main.js"></script>
     <script>
-        // Header scripts (same as index)
+        // Header scripts
         (function() {
             const hamburger = document.getElementById('hamburger');
             const nav = document.getElementById('nav');
@@ -201,44 +185,27 @@
             });
         })();
 
-        // Load apps (simplified)
+        // Load dashboard data
         document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('appGrid');
-            if (!container) return;
-            fetch('https://alpha-k48a.onrender.com/api/apps')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.apps && data.apps.length) {
-                        container.innerHTML = data.apps.map(app => `
-                            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden app-card border border-gray-100 dark:border-gray-700">
-                                <div class="p-4">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">${app.name.charAt(0)}</div>
-                                        <div class="flex-1 min-w-0">
-                                            <h4 class="font-semibold text-gray-900 dark:text-white truncate">${app.name}</h4>
-                                            <p class="text-sm text-gray-500 truncate">${app.projectId?.name || 'Unknown'}</p>
-                                            <div class="flex items-center mt-1">
-                                                <span class="text-yellow-400 text-sm">${'★'.repeat(Math.floor(app.averageRating || 0))}${'☆'.repeat(5 - Math.floor(app.averageRating || 0))}</span>
-                                                <span class="text-xs text-gray-500 ml-1">(${(app.averageRating || 0).toFixed(1)})</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">${app.description || 'No description'}</p>
-                                    <div class="flex items-center justify-between mt-3">
-                                        <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">${app.category || 'General'}</span>
-                                        <span class="text-xs text-gray-400">📥 ${(app.downloads || 0).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">No apps available</div>`;
-                    }
-                })
-                .catch(() => {
-                    container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">⚠️ Could not load apps.</div>`;
-                });
+            // For demo, show placeholder projects
+            const list = document.getElementById('projectList');
+            if (list) {
+                list.innerHTML = `
+                    <div class="px-6 py-4 project-item flex items-center justify-between">
+                        <div><p class="font-medium dark:text-white">MyApp</p><p class="text-sm text-gray-500">Next.js · TypeScript</p></div>
+                        <span class="status-badge success">✅ Deployed</span>
+                    </div>
+                    <div class="px-6 py-4 project-item flex items-center justify-between">
+                        <div><p class="font-medium dark:text-white">API-Server</p><p class="text-sm text-gray-500">Node.js · JavaScript</p></div>
+                        <span class="status-badge building">🔄 Building</span>
+                    </div>
+                    <div class="px-6 py-4 project-item flex items-center justify-between">
+                        <div><p class="font-medium dark:text-white">MobileApp</p><p class="text-sm text-gray-500">React Native · TypeScript</p></div>
+                        <span class="status-badge failed">❌ Failed</span>
+                    </div>
+                `;
+            }
         });
     </script>
 </body>
-            </html>
+                                                                   </html>
