@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/**/*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/**/*.css",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/frontend/landing.html"
+    },
+    {
+      "src": "/userplatform",
+      "dest": "/frontend/userplatform.html"
+    },
+    {
+      "src": "/developersplatform",
+      "dest": "/frontend/developersplatform.html"
+    },
+    {
+      "src": "/codespace",
+      "dest": "/frontend/codespace.html"
+    },
+    {
+      "src": "/projectmanager",
+      "dest": "/frontend/projectmanager.html"
+    },
+    {
+      "src": "/deployment",
+      "dest": "/frontend/deployment.html"
+    },
+    {
+      "src": "/hosting",
+      "dest": "/frontend/hosting.html"
+    },
+    {
+      "src": "/dbstorage",
+      "dest": "/frontend/dbstorage.html"
+    },
+    {
+      "src": "/env",
+      "dest": "/frontend/env.html"
+    },
+    {
+      "src": "/logs",
+      "dest": "/frontend/logs.html"
+    },
+    {
+      "src": "/apppublishing",
+      "dest": "/frontend/apppublishing.html"
+    },
+    {
+      "src": "/logo",
+      "dest": "/frontend/logo.html"
+    },
+    {
+      "src": "/main.js",
+      "dest": "/frontend/main.js"
+    },
+    {
+      "src": "/style.css",
+      "dest": "/frontend/style.css"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/landing.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Authorization"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+        }
