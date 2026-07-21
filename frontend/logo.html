@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alpha — Venom Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Russo+One&family=Orbitron:wght@700;900&family=Inter:wght@300;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #0a0a0a;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        /* ---- Venom Symbiote Background ---- */
+        .venom-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at 50% 60%, #1a0a0a, #050505 70%),
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 40px,
+                    rgba(255, 0, 0, 0.015) 40px,
+                    rgba(255, 0, 0, 0.015) 41px),
+                repeating-linear-gradient(-45deg,
+                    transparent,
+                    transparent 40px,
+                    rgba(100, 0, 0, 0.01) 40px,
+                    rgba(100, 0, 0, 0.01) 41px);
+            pointer-events: none;
+        }
+
+        /* Venom tendrils animation */
+        .venom-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(200, 0, 0, 0.06), transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(100, 0, 255, 0.04), transparent 50%);
+            animation: venomPulse 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes venomPulse {
+            0% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Floating symbiote particles */
+        .symbiote-particle {
+            position: fixed;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.3), transparent 70%);
+            filter: blur(30px);
+            animation: floatSymbiote 8s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .symbiote-particle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+        .symbiote-particle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -5%;
+            right: -5%;
+            animation-delay: 3s;
+            background: radial-gradient(circle, rgba(100, 0, 255, 0.2), transparent 70%);
+        }
+        .symbiote-particle:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 5s;
+            background: radial-gradient(circle, rgba(200, 0, 50, 0.15), transparent 70%);
+        }
+
+        @keyframes floatSymbiote {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(40px, -30px) scale(1.2);
+            }
+            66% {
+                transform: translate(-20px, 40px) scale(0.9);
+            }
+            100% {
+                transform: translate(30px, 20px) scale(1.1);
+            }
+        }
+
+        /* ---- Glitch Lines (Venom style) ---- */
+        .glitch-line {
+            position: fixed;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.12), transparent);
+            animation: glitchScan 7s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .glitch-line:nth-child(4) {
+            top: 20%;
+            animation-delay: 0s;
+            height: 3px;
+        }
+        .glitch-line:nth-child(5) {
+            top: 50%;
+            animation-delay: 2.4s;
+            background: linear-gradient(90deg, transparent, rgba(100, 0, 255, 0.08), transparent);
+        }
+        .glitch-line:nth-child(6) {
+            top: 75%;
+            animation-delay: 4.8s;
+        }
+
+        @keyframes glitchScan {
+            0% {
+                transform: translateX(-100%) scaleX(0.3);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100vw) scaleX(0.3);
+                opacity: 0;
+            }
+        }
+
+        /* ---- Main Logo (Venom Style) ---- */
+        .logo-wrapper {
+            position: relative;
+            z-index: 1;
+            padding: 44px 56px 40px;
+            background:
+                linear-gradient(145deg, rgba(15, 5, 5, 0.95), rgba(5, 0, 5, 0.97));
+            border-radius: 24px;
+            border: 1px solid rgba(255, 0, 0, 0.10);
+            box-shadow:
+                0 0 60px rgba(255, 0, 0, 0.04),
+                inset 0 0 80px rgba(255, 0, 0, 0.015),
+                0 20px 60px rgba(0, 0, 0, 0.9);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            min-width: 340px;
+            overflow: hidden;
+        }
+
+        /* Venom drip border effect */
+        .logo-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.15), transparent 40%, rgba(100, 0, 255, 0.1), transparent 70%, rgba(255, 0, 0, 0.1));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: borderDrip 4s ease-in-out infinite;
+        }
+
+        @keyframes borderDrip {
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .logo-wrapper:hover {
+            transform: scale(1.02) translateY(-4px);
+            border-color: rgba(255, 0, 0, 0.2);
+            box-shadow:
+                0 0 80px rgba(255, 0, 0, 0.08),
+                inset 0 0 100px rgba(255, 0, 0, 0.025),
+                0 30px 80px rgba(0, 0, 0, 0.95);
+        }
+
+        /* Corner brackets (Venom style) */
+        .corner {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-color: rgba(255, 0, 0, 0.12);
+            border-style: solid;
+            border-width: 0;
+            transition: border-color 0.4s ease;
+            z-index: 2;
+        }
+        .logo-wrapper:hover .corner {
+            border-color: rgba(255, 0, 0, 0.3);
+        }
+        .corner-tl {
+            top: 12px;
+            left: 12px;
+            border-top-width: 2px;
+            border-left-width: 2px;
+        }
+        .corner-tr {
+            top: 12px;
+            right: 12px;
+            border-top-width: 2px;
+            border-right-width: 2px;
+        }
+        .corner-bl {
+            bottom: 12px;
+            left: 12px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+        }
+        .corner-br {
+            bottom: 12px;
+            right: 12px;
+            border-bottom-width: 2px;
+            border-right-width: 2px;
+        }
+
+        .logo-inner {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ---- SVG Logo Mark (Venom Symbiote A) ---- */
+        .logo-mark {
+            width: 95px;
+            height: 95px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .logo-mark svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0 0 40px rgba(255, 0, 0, 0.08));
+        }
+
+        /* Venom ring */
+        .ring-glow {
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 0, 0, 0.06);
+            animation: ringRotate 12s linear infinite;
+            z-index: -1;
+        }
+        .ring-glow::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid rgba(100, 0, 255, 0.04);
+            animation: ringRotate 8s linear infinite reverse;
+        }
+
+        @keyframes ringRotate {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ---- STEP-BY-STEP DRAWING (Venom style) ---- */
+
+        /* Main A — Venom symbiote shape */
+        .step-a {
+            fill: none;
+            stroke: #cc0000;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 400;
+            stroke-dashoffset: 400;
+            animation: drawStep 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.2));
+        }
+
+        /* Shadow layer (darker red) */
+        .step-a-shadow {
+            fill: none;
+            stroke: #440000;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 400;
+            stroke-dashoffset: 400;
+            animation: drawStep 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            opacity: 0.3;
+        }
+
+        /* Crossbar (jaw) */
+        .step-crossbar {
+            fill: none;
+            stroke: #cc0000;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 60;
+            stroke-dashoffset: 60;
+            animation: drawStep 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1.7s forwards;
+        }
+
+        /* Venom horns (spiky) */
+        .step-horn {
+            fill: none;
+            stroke: #cc0000;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 30;
+            stroke-dashoffset: 30;
+            animation: drawStep 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.6s forwards;
+            filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.15));
+        }
+        .step-horn:nth-child(2) {
+            animation-delay: 2.9s;
+        }
+
+        /* Venom Eye (glowing white/red) */
+        .step-eye {
+            fill: #ffffff;
+            opacity: 0;
+            animation: fadeIn 0.6s ease 3.5s forwards;
+            filter: drop-shadow(0 0 20px #ff0000) drop-shadow(0 0 40px #ff0000);
+        }
+        .step-eye-pulse {
+            animation: eyePulse 1.8s ease-in-out infinite 4.2s;
+        }
+
+        @keyframes eyePulse {
+            0%,
+            100% {
+                opacity: 0.9;
+                filter: drop-shadow(0 0 20px #ff0000) drop-shadow(0 0 40px #ff0000);
+            }
+            50% {
+                opacity: 0.4;
+                filter: drop-shadow(0 0 8px #ff0000) drop-shadow(0 0 20px #ff0000);
+            }
+        }
+
+        /* Venom Fangs (sharp) */
+        .step-fang {
+            fill: #cc0000;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 4.0s forwards;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.3));
+        }
+        .step-fang:nth-child(2) {
+            animation-delay: 4.3s;
+        }
+
+        /* Venom fill (dark red glow) */
+        .step-fill {
+            fill: rgba(200, 0, 0, 0.06);
+            opacity: 0;
+            animation: fadeIn 1s ease 4.8s forwards;
+        }
+
+        /* Venom cracks / veins */
+        .step-crack {
+            fill: none;
+            stroke: #990000;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            animation: drawStep 0.5s ease 5.4s forwards;
+            opacity: 0.6;
+        }
+        .step-crack:nth-child(2) {
+            animation-delay: 5.7s;
+            stroke-dasharray: 12;
+            stroke-dashoffset: 12;
+        }
+        .step-crack:nth-child(3) {
+            animation-delay: 6.0s;
+            stroke-dasharray: 12;
+            stroke-dashoffset: 12;
+        }
+
+        /* Venom drips */
+        .step-drip {
+            fill: #cc0000;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 6.3s forwards;
+            filter: drop-shadow(0 5px 15px rgba(255, 0, 0, 0.2));
+        }
+        .step-drip:nth-child(2) {
+            animation-delay: 6.5s;
+        }
+        .step-drip:nth-child(3) {
+            animation-delay: 6.7s;
+        }
+
+        /* Corner dots */
+        .step-dot {
+            opacity: 0;
+            animation: fadeIn 0.4s ease 6.9s forwards;
+        }
+
+        /* Shared animations */
+        @keyframes drawStep {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ---- ATTRACTIVE FONTS (Venom style) ---- */
+
+        /* "Alpha" — Black Ops One (aggressive, bold) */
+        .brand {
+            font-family: 'Black Ops One', 'Russo One', cursive;
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 0;
+            animation: typeText 1.2s steps(5) 7.3s forwards;
+            position: relative;
+            background: linear-gradient(135deg, #ff1a1a 0%, #ff0000 30%, #cc0000 60%, #880000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.15));
+        }
+
+        /* Venom drip effect on text */
+        .brand::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #ff0000, transparent 40%, #ff0000 60%, transparent);
+            filter: blur(2px);
+            opacity: 0.5;
+            animation: dripUnderline 3s ease-in-out infinite;
+        }
+
+        @keyframes dripUnderline {
+            0%,
+            100% {
+                transform: scaleX(0.8);
+                opacity: 0.3;
+            }
+            50% {
+                transform: scaleX(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes typeText {
+            to {
+                width: 300px;
+            }
+        }
+
+        /* Version badge — venom style */
+        .version-badge {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 900;
+            color: rgba(255, 0, 0, 0.2);
+            background: rgba(255, 0, 0, 0.04);
+            padding: 2px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 0, 0, 0.06);
+            letter-spacing: 2px;
+            opacity: 0;
+            animation: fadeIn 0.6s ease 8.6s forwards;
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.05);
+        }
+
+        /* Tagline — "developers choice" with Venom font */
+        .tagline-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .tagline-divider {
+            width: 35px;
+            height: 2px;
+            background: linear-gradient(90deg, #cc0000, transparent);
+            opacity: 0;
+            animation: fadeIn 0.5s ease 9.2s forwards;
+        }
+
+        .tagline-divider-right {
+            width: 35px;
+            height: 2px;
+            background: linear-gradient(270deg, #cc0000, transparent);
+            opacity: 0;
+            animation: fadeIn 0.5s ease 9.2s forwards;
+        }
+
+        /* Tagline — Russo One (bold, aggressive) */
+        .tagline {
+            font-family: 'Russo One', 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 0;
+            animation: typeTagline 1.8s steps(18) 9.2s forwards;
+            background: linear-gradient(90deg, #ff3333, #cc0000, #ff3333);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: typeTagline 1.8s steps(18) 9.2s forwards, shimmerText 3s ease-in-out infinite 11.2s;
+        }
+
+        @keyframes typeTagline {
+            to {
+                width: 300px;
+            }
+        }
+
+        @keyframes shimmerText {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* Blinking cursor */
+        .tagline::after {
+            content: '_';
+            color: #ff0000;
+            -webkit-text-fill-color: #ff0000;
+            font-weight: 300;
+            margin-left: 3px;
+            animation: cursorBlink 1s step-end infinite 11.2s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+            font-family: 'Inter', monospace;
+        }
+
+        @keyframes cursorBlink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* ---- Glitch on hover (Venom style) ---- */
+        .logo-wrapper:hover .brand {
+            animation: glitchText 0.3s ease 2;
+        }
+
+        @keyframes glitchText {
+            0% {
+                transform: translate(0);
+            }
+            20% {
+                transform: translate(-3px, 2px);
+                filter: drop-shadow(3px 0 #ff0000) drop-shadow(-3px 0 #ff00ff);
+            }
+            40% {
+                transform: translate(3px, -2px);
+                filter: drop-shadow(-3px 0 #ff0000) drop-shadow(3px 0 #ff00ff);
+            }
+            60% {
+                transform: translate(-2px, 3px);
+            }
+            80% {
+                transform: translate(2px, -3px);
+            }
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 720px) {
+            .logo-wrapper {
+                padding: 28px 24px;
+                border-radius: 18px;
+                min-width: auto;
+            }
+            .logo-inner {
+                gap: 18px;
+                flex-direction: column;
+                text-align: center;
+            }
+            .logo-mark {
+                width: 75px;
+                height: 75px;
+            }
+            .brand {
+                font-size: 40px !important;
+            }
+            @keyframes typeText {
+                to {
+                    width: 210px;
+                }
+            }
+            .version-badge {
+                font-size: 9px;
+                padding: 1px 8px;
+            }
+            .tagline-wrapper {
+                justify-content: center;
+            }
+            .tagline {
+                font-size: 12px;
+                letter-spacing: 2.5px;
+            }
+            @keyframes typeTagline {
+                to {
+                    width: 240px;
+                }
+            }
+            .corner {
+                width: 14px;
+                height: 14px;
+            }
+            .corner-tl,
+            .corner-tr {
+                top: 8px;
+            }
+            .corner-bl,
+            .corner-br {
+                bottom: 8px;
+            }
+            .corner-tl,
+            .corner-bl {
+                left: 8px;
+            }
+            .corner-tr,
+            .corner-br {
+                right: 8px;
+            }
+            .tagline-divider,
+            .tagline-divider-right {
+                width: 18px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .logo-wrapper {
+                padding: 18px 14px;
+                border-radius: 14px;
+            }
+            .logo-mark {
+                width: 60px;
+                height: 60px;
+            }
+            .brand {
+                font-size: 30px !important;
+            }
+            @keyframes typeText {
+                to {
+                    width: 160px;
+                }
+            }
+            .brand-row {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .tagline {
+                font-size: 10px;
+                letter-spacing: 1.5px;
+            }
+            @keyframes typeTagline {
+                to {
+                    width: 190px;
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Venom Background -->
+    <div class="venom-bg"></div>
+    <div class="symbiote-particle"></div>
+    <div class="symbiote-particle"></div>
+    <div class="symbiote-particle"></div>
+
+    <!-- Glitch Lines -->
+    <div class="glitch-line"></div>
+    <div class="glitch-line"></div>
+    <div class="glitch-line"></div>
+
+    <!-- Logo -->
+    <div class="logo-wrapper">
+        <span class="corner corner-tl"></span>
+        <span class="corner corner-tr"></span>
+        <span class="corner corner-bl"></span>
+        <span class="corner corner-br"></span>
+
+        <div class="logo-inner">
+
+            <!-- Mark: Venom Symbiote A -->
+            <div class="logo-mark">
+                <div class="ring-glow"></div>
+
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="venomGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ff1a1a" />
+                            <stop offset="50%" stop-color="#cc0000" />
+                            <stop offset="100%" stop-color="#660000" />
+                        </linearGradient>
+                        <filter id="venomGlow">
+                            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#ff0000" flood-opacity="0.2"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Shadow layer -->
+                    <path class="step-a-shadow" d="
+                        M 50 4
+                        L 6 94
+                        L 30 94
+                        L 38 66
+                        L 62 66
+                        L 70 94
+                        L 94 94
+                        Z
+                    " />
+
+                    <!-- Step 1: Main A — Venom shape (more aggressive) -->
+                    <path class="step-a" d="
+                        M 50 4
+                        L 6 94
+                        L 30 94
+                        L 38 66
+                        L 62 66
+                        L 70 94
+                        L 94 94
+                        Z
+                    " />
+
+                    <!-- Step 2: Crossbar (jaw) -->
+                    <path class="step-crossbar" d="M 26 56 L 74 56" />
+
+                    <!-- Step 3: Venom Horns (spikier) -->
+                    <path class="step-horn" d="M 50 4 L 34 -4 L 44 8" />
+                    <path class="step-horn" d="M 50 4 L 66 -4 L 56 8" />
+
+                    <!-- Step 4: Venom Eye (white with red glow) -->
+                    <ellipse class="step-eye step-eye-pulse" cx="50" cy="36" rx="7" ry="9" />
+
+                    <!-- Step 5: Fangs (sharper, longer) -->
+                    <polygon class="step-fang" points="34,56 28,70 40,58" />
+                    <polygon class="step-fang" points="66,56 60,70 72,58" />
+
+                    <!-- Step 6: Fill -->
+                    <path class="step-fill" d="
+                        M 50 4
+                        L 6 94
+                        L 30 94
+                        L 38 66
+                        L 62 66
+                        L 70 94
+                        L 94 94
+                        Z
+                    " />
+
+                    <!-- Step 7: Venom cracks/veins -->
+                    <path class="step-crack" d="M 50 38 L 50 56" />
+                    <path class="step-crack" d="M 36 46 L 44 50" />
+                    <path class="step-crack" d="M 64 46 L 56 50" />
+
+                    <!-- Step 8: Venom drips -->
+                    <path class="step-drip" d="M 16 90 Q 18 100 14 108 Q 12 100 16 90" />
+                    <path class="step-drip" d="M 84 90 Q 82 102 86 110 Q 88 102 84 90" />
+                    <path class="step-drip" d="M 50 92 Q 48 102 50 112 Q 52 102 50 92" />
+
+                    <!-- Corner dots -->
+                    <circle class="step-dot" cx="8" cy="92" r="2.5" fill="rgba(255,0,0,0.15)" />
+                    <circle class="step-dot" cx="92" cy="92" r="2.5" fill="rgba(255,0,0,0.15)" />
+                    <circle class="step-dot" cx="50" cy="6" r="2.5" fill="rgba(255,0,0,0.2)" />
+                </svg>
+            </div>
+
+            <!-- Text -->
+            <div class="logo-text">
+                <div class="brand-row">
+                    <span class="brand">Alpha</span>
+                    <span class="version-badge">v3.0</span>
+                </div>
+
+                <div class="tagline-wrapper">
+                    <span class="tagline-divider"></span>
+                    <span class="tagline">developers choice</span>
+                    <span class="tagline-divider-right"></span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+  </html>
