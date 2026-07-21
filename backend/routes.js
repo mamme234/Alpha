@@ -17,7 +17,7 @@ const {
 } = require('./controllers');
 
 // Import middleware
-const { protect } = require('./middleware/auth');
+const { protect } = require('./middleware');
 
 // ============================================
 // AUTH ROUTES
