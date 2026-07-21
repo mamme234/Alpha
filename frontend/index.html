@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alpha — Build, Deploy, Discover</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Russo+One&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23667eea'/><text x='50' y='68' font-size='56' text-anchor='middle' fill='white' font-weight='bold'>A</text></svg>">
+
+    <style>
+        /* ===== HEADER STYLES (Venom) ===== */
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Russo+One&family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .header-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at 50% 60%, #1a0a0a, #050505 70%),
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 40px,
+                    rgba(255, 0, 0, 0.015) 40px,
+                    rgba(255, 0, 0, 0.015) 41px),
+                repeating-linear-gradient(-45deg,
+                    transparent,
+                    transparent 40px,
+                    rgba(100, 0, 0, 0.01) 40px,
+                    rgba(100, 0, 0, 0.01) 41px);
+            pointer-events: none;
+            border-radius: 0 0 40px 40px;
+        }
+
+        .header-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(200, 0, 0, 0.06), transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(100, 0, 255, 0.04), transparent 50%);
+            animation: venomPulse 6s ease-in-out infinite alternate;
+            border-radius: 0 0 40px 40px;
+        }
+
+        @keyframes venomPulse {
+            0% { opacity: 0.5; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 40px;
+            background: linear-gradient(180deg, rgba(10, 5, 5, 0.98) 60%, rgba(10, 5, 5, 0.85) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 0, 0, 0.06);
+            transition: all 0.4s ease;
+        }
+
+        .header.scrolled {
+            padding: 10px 40px;
+            background: rgba(10, 5, 5, 0.98);
+            border-bottom: 1px solid rgba(255, 0, 0, 0.12);
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+            padding: 4px 12px 4px 4px;
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .logo-wrapper:hover {
+            transform: scale(1.04);
+            background: rgba(255, 0, 0, 0.04);
+        }
+
+        .logo-mark {
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .logo-mark svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.08));
+        }
+
+        .ring-glow {
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 0, 0, 0.05);
+            animation: ringRotate 12s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes ringRotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .logo-svg-a {
+            fill: none;
+            stroke: #cc0000;
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: drawLogo 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.15));
+        }
+
+        .logo-svg-crossbar {
+            fill: none;
+            stroke: #cc0000;
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            stroke-dasharray: 60;
+            stroke-dashoffset: 60;
+            animation: drawLogo 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1.7s forwards;
+        }
+
+        .logo-svg-horn {
+            fill: none;
+            stroke: #cc0000;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-dasharray: 30;
+            stroke-dashoffset: 30;
+            animation: drawLogo 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.6s forwards;
+        }
+        .logo-svg-horn:nth-child(2) { animation-delay: 2.9s; }
+
+        .logo-svg-eye {
+            fill: #ffffff;
+            opacity: 0;
+            animation: fadeIn 0.6s ease 3.5s forwards;
+            filter: drop-shadow(0 0 16px #ff0000) drop-shadow(0 0 32px #ff0000);
+        }
+
+        .logo-svg-eye-pulse {
+            animation: eyePulse 1.8s ease-in-out infinite 4.2s;
+        }
+
+        @keyframes eyePulse {
+            0%, 100% { opacity: 0.9; filter: drop-shadow(0 0 16px #ff0000) drop-shadow(0 0 32px #ff0000); }
+            50% { opacity: 0.4; filter: drop-shadow(0 0 6px #ff0000) drop-shadow(0 0 16px #ff0000); }
+        }
+
+        .logo-svg-fang {
+            fill: #cc0000;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 4.0s forwards;
+            filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.3));
+        }
+        .logo-svg-fang:nth-child(2) { animation-delay: 4.3s; }
+
+        .logo-svg-fill {
+            fill: rgba(200, 0, 0, 0.05);
+            opacity: 0;
+            animation: fadeIn 1s ease 4.8s forwards;
+        }
+
+        .logo-svg-crack {
+            fill: none;
+            stroke: #990000;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            animation: drawLogo 0.5s ease 5.4s forwards;
+            opacity: 0.5;
+        }
+        .logo-svg-crack:nth-child(2) {
+            animation-delay: 5.7s;
+            stroke-dasharray: 12;
+            stroke-dashoffset: 12;
+        }
+
+        .logo-svg-dot {
+            opacity: 0;
+            animation: fadeIn 0.4s ease 6.4s forwards;
+        }
+
+        @keyframes drawLogo {
+            to { stroke-dashoffset: 0; }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+
+        .logo-brand {
+            font-family: 'Black Ops One', 'Russo One', cursive;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ff1a1a 0%, #ff0000 30%, #cc0000 60%, #880000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.08));
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 0;
+            animation: typeBrand 0.8s steps(5) 7.3s forwards;
+        }
+
+        @keyframes typeBrand {
+            to { width: 150px; }
+        }
+
+        .logo-tagline {
+            font-family: 'Russo One', 'Orbitron', sans-serif;
+            font-size: 8px;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 0;
+            animation: typeTagline 1.4s steps(18) 8.5s forwards, shimmerText 3s ease-in-out infinite 10.2s;
+            background: linear-gradient(90deg, #ff3333, #cc0000, #ff3333);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes typeTagline {
+            to { width: 160px; }
+        }
+
+        @keyframes shimmerText {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .logo-tagline::after {
+            content: '_';
+            color: #ff0000;
+            -webkit-text-fill-color: #ff0000;
+            font-weight: 300;
+            margin-left: 2px;
+            animation: cursorBlink 1s step-end infinite 10.2s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+            font-family: 'Inter', monospace;
+        }
+
+        @keyframes cursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav a {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 4px 0;
+        }
+
+        .nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, #ff0000, #cc0000);
+            transition: width 0.3s ease;
+            filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.3));
+        }
+
+        .nav a:hover {
+            color: #ffffff;
+        }
+        .nav a:hover::after {
+            width: 100%;
+        }
+        .nav a.active {
+            color: #ffffff;
+        }
+        .nav a.active::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: #ffffff !important;
+            padding: 8px 24px !important;
+            border-radius: 30px;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.1);
+        }
+
+        .nav-cta::after {
+            display: none !important;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.2);
+            background: linear-gradient(135deg, #ff3333, #cc0000);
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+            background: none;
+            border: none;
+        }
+
+        .hamburger span {
+            width: 28px;
+            height: 2px;
+            background: #ffffff;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        @media (max-width: 968px) {
+            .header { padding: 12px 20px; }
+            .header.scrolled { padding: 8px 20px; }
+            .nav { gap: 20px; }
+            .nav a { font-size: 13px; }
+        }
+
+        @media (max-width: 768px) {
+            .hamburger { display: flex; }
+
+            .nav {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: rgba(10, 5, 5, 0.98);
+                backdrop-filter: blur(20px);
+                padding: 20px 24px 30px;
+                gap: 16px;
+                border-bottom: 1px solid rgba(255, 0, 0, 0.06);
+                transform: translateY(-120%);
+                transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                opacity: 0;
+                pointer-events: none;
+                border-radius: 0 0 20px 20px;
+            }
+
+            .nav.open {
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            .nav a {
+                font-size: 16px;
+                padding: 8px 0;
+                width: 100%;
+                text-align: center;
+            }
+
+            .nav-cta {
+                width: 100%;
+                text-align: center;
+                padding: 12px !important;
+            }
+
+            .logo-brand {
+                font-size: 22px;
+            }
+            @keyframes typeBrand {
+                to { width: 120px; }
+            }
+
+            .logo-tagline {
+                font-size: 7px;
+                letter-spacing: 2.5px;
+            }
+            @keyframes typeTagline {
+                to { width: 135px; }
+            }
+
+            .logo-mark {
+                width: 42px;
+                height: 42px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header { padding: 10px 14px; }
+            .logo-wrapper { gap: 10px; padding: 2px 6px 2px 2px; }
+            .logo-mark { width: 36px; height: 36px; }
+            .logo-brand { font-size: 18px; }
+            @keyframes typeBrand { to { width: 100px; } }
+            .logo-tagline { font-size: 6px; letter-spacing: 2px; }
+            @keyframes typeTagline { to { width: 115px; } }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="header" id="header">
+        <div class="header-bg"></div>
+        <div class="header-inner">
+            <a href="/" class="logo-wrapper" id="logoLink">
+                <div class="logo-mark">
+                    <div class="ring-glow"></div>
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path class="logo-svg-a" d="M 50 4 L 6 94 L 30 94 L 38 66 L 62 66 L 70 94 L 94 94 Z" stroke="#440000" stroke-width="5" opacity="0.2" />
+                        <path class="logo-svg-a" d="M 50 4 L 6 94 L 30 94 L 38 66 L 62 66 L 70 94 L 94 94 Z" />
+                        <path class="logo-svg-crossbar" d="M 26 56 L 74 56" />
+                        <path class="logo-svg-horn" d="M 50 4 L 34 -4 L 44 8" />
+                        <path class="logo-svg-horn" d="M 50 4 L 66 -4 L 56 8" />
+                        <ellipse class="logo-svg-eye logo-svg-eye-pulse" cx="50" cy="36" rx="7" ry="9" />
+                        <polygon class="logo-svg-fang" points="34,56 28,70 40,58" />
+                        <polygon class="logo-svg-fang" points="66,56 60,70 72,58" />
+                        <path class="logo-svg-fill" d="M 50 4 L 6 94 L 30 94 L 38 66 L 62 66 L 70 94 L 94 94 Z" />
+                        <path class="logo-svg-crack" d="M 50 38 L 50 56" />
+                        <path class="logo-svg-crack" d="M 36 46 L 44 50" />
+                        <path class="logo-svg-crack" d="M 64 46 L 56 50" />
+                        <circle class="logo-svg-dot" cx="8" cy="92" r="2.5" fill="rgba(255,0,0,0.15)" />
+                        <circle class="logo-svg-dot" cx="92" cy="92" r="2.5" fill="rgba(255,0,0,0.15)" />
+                        <circle class="logo-svg-dot" cx="50" cy="6" r="2.5" fill="rgba(255,0,0,0.2)" />
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-brand">Alpha</span>
+                    <span class="logo-tagline">developers choice</span>
+                </div>
+            </a>
+
+            <nav class="nav" id="nav">
+                <a href="/" class="active">Home</a>
+                <a href="/users">Marketplace</a>
+                <a href="/developers">Dashboard</a>
+                <a href="#" class="nav-cta" id="getStartedBtn">Get Started</a>
+            </nav>
+
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <main class="page-content pt-32 pb-20 px-4 hero-pattern">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="inline-block bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full text-sm font-semibold mb-6">
+                🚀 Launching Soon — Join the Waitlist
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold leading-tight mb-6">
+                Build, Deploy &<br>
+                <span class="gradient-text">Discover Apps</span>
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10">
+                The all-in-one platform where developers ship fast and users find amazing apps.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="/users" class="gradient-bg text-white px-8 py-4 rounded-xl font-semibold text-lg glow-button inline-flex items-center justify-center">
+                    🧑 Browse Apps
+                </a>
+                <a href="/developers" class="bg-white text-gray-800 px-8 py-4 rounded-xl font-semibold text-lg border-2 border-gray-200 hover:border-indigo-500 transition inline-flex items-center justify-center">
+                    👨‍💻 Developer Dashboard
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Stats -->
+    <section class="py-16 border-t border-b border-gray-200 bg-white dark:bg-gray-900">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div><div class="text-4xl font-bold gradient-text">50K+</div><div class="text-gray-600 dark:text-gray-400 mt-1">Apps Published</div></div>
+            <div><div class="text-4xl font-bold gradient-text">2M+</div><div class="text-gray-600 dark:text-gray-400 mt-1">Downloads</div></div>
+            <div><div class="text-4xl font-bold gradient-text">10K+</div><div class="text-gray-600 dark:text-gray-400 mt-1">Developers</div></div>
+            <div><div class="text-4xl font-bold gradient-text">4.8★</div><div class="text-gray-600 dark:text-gray-400 mt-1">Average Rating</div></div>
+        </div>
+    </section>
+
+    <!-- Featured Apps -->
+    <section class="py-20 px-4 bg-gray-50 dark:bg-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12 dark:text-white">Featured Apps</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="featuredApps">
+                <!-- Rendered by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12 px-4">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-8">
+            <div><span class="text-2xl font-bold text-white">Alpha</span><p class="mt-2 text-sm">Build, deploy, discover — all in one platform.</p></div>
+            <div><h4 class="text-white font-semibold mb-3">Platform</h4><ul class="space-y-2 text-sm"><li><a href="/users" class="hover:text-white transition">Marketplace</a></li><li><a href="/developers" class="hover:text-white transition">Developer</a></li></ul></div>
+            <div><h4 class="text-white font-semibold mb-3">Company</h4><ul class="space-y-2 text-sm"><li><a href="#" class="hover:text-white transition">About</a></li><li><a href="#" class="hover:text-white transition">Blog</a></li></ul></div>
+            <div><h4 class="text-white font-semibold mb-3">Legal</h4><ul class="space-y-2 text-sm"><li><a href="#" class="hover:text-white transition">Privacy</a></li><li><a href="#" class="hover:text-white transition">Terms</a></li></ul></div>
+        </div>
+        <div class="max-w-7xl mx-auto border-t border-gray-800 mt-8 pt-8 text-center text-sm">© 2026 Alpha. All rights reserved.</div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+        // Header scripts
+        (function() {
+            const hamburger = document.getElementById('hamburger');
+            const nav = document.getElementById('nav');
+            if (hamburger && nav) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('active');
+                    nav.classList.toggle('open');
+                });
+                document.querySelectorAll('.nav a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        hamburger.classList.remove('active');
+                        nav.classList.remove('open');
+                    });
+                });
+            }
+
+            const header = document.getElementById('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) header.classList.add('scrolled');
+                else header.classList.remove('scrolled');
+            });
+
+            document.getElementById('logoLink')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                this.style.transform = 'scale(0.92)';
+                setTimeout(() => this.style.transform = '', 200);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        })();
+
+        // Load featured apps
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('featuredApps');
+            if (!container) return;
+            fetch('https://alpha-k48a.onrender.com/api/apps/featured')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.apps && data.apps.length) {
+                        container.innerHTML = data.apps.map(app => `
+                            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden app-card border border-gray-100 dark:border-gray-700">
+                                <div class="p-4">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">${app.name.charAt(0)}</div>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-semibold text-gray-900 dark:text-white truncate">${app.name}</h4>
+                                            <p class="text-sm text-gray-500 truncate">${app.projectId?.name || 'Unknown'}</p>
+                                            <div class="flex items-center mt-1">
+                                                <span class="text-yellow-400 text-sm">${'★'.repeat(Math.floor(app.averageRating || 0))}${'☆'.repeat(5 - Math.floor(app.averageRating || 0))}</span>
+                                                <span class="text-xs text-gray-500 ml-1">(${(app.averageRating || 0).toFixed(1)})</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">${app.description || 'No description'}</p>
+                                    <div class="flex items-center justify-between mt-3">
+                                        <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">${app.category || 'General'}</span>
+                                        <span class="text-xs text-gray-400">📥 ${(app.downloads || 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">No featured apps available</div>`;
+                    }
+                })
+                .catch(() => {
+                    container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">⚠️ Could not load featured apps.</div>`;
+                });
+        });
+    </script>
+</body>
+    </html>
