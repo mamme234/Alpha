@@ -1,0 +1,56 @@
+# render.yaml
+services:
+  - type: web
+    name: platform-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_HOST
+        fromDatabase:
+          name: platform-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: platform-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: platform-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: platform-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: platform-db
+          property: password
+      - key: MONGODB_URI
+        fromDatabase:
+          name: platform-mongo
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: platform-redis
+          type: redis
+          property: connectionString
+
+  - type: redis
+    name: platform-redis
+    plan: starter
+
+databases:
+  - name: platform-db
+    plan: starter
+    databaseName: platform_dev
+  
+  - name: platform-mongo
+    plan: starter
+    databaseName: platform_mongo
