@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publish App - Developer Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <img src="logo.png" alt="Platform Logo" height="40">
+                <span>DevPlatform</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="developers.html">Dashboard</a></li>
+                <li><a href="search.html">Search</a></li>
+                <li><a href="editor.html">Editor</a></li>
+                <li><a href="publish.html" class="active">Publish</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+                <li>
+                    <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">
+                        🌓
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding:30px 0;max-width:800px;">
+        <h1>📱 Publish Your App</h1>
+        <p style="color:var(--gray);">Share your application with the world</p>
+
+        <div class="card" style="padding:30px;margin-top:30px;">
+            <form id="publish-form" onsubmit="handlePublish(event)" enctype="multipart/form-data">
+                <!-- Basic Information -->
+                <h3>Basic Information</h3>
+                <div style="margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">App Name *</label>
+                        <input type="text" id="app-name" class="form-control" placeholder="My Amazing App" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Package Name *</label>
+                        <input type="text" id="app-package" class="form-control" placeholder="com.example.myapp" required>
+                        <div class="form-text">Unique identifier for your app (e.g., com.example.myapp)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Version *</label>
+                        <input type="text" id="app-version" class="form-control" placeholder="1.0.0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select id="app-category" class="form-control" required>
+                            <option value="">Select Category</option>
+                            <option value="ai">🤖 AI</option>
+                            <option value="education">📚 Education</option>
+                            <option value="business">💼 Business</option>
+                            <option value="finance">💰 Finance</option>
+                            <option value="health">🏥 Health</option>
+                            <option value="social">👥 Social</option>
+                            <option value="entertainment">🎭 Entertainment</option>
+                            <option value="games">🎮 Games</option>
+                            <option value="productivity">⚡ Productivity</option>
+                            <option value="tools">🔧 Tools</option>
+                            <option value="shopping">🛍️ Shopping</option>
+                            <option value="music">🎵 Music</option>
+                            <option value="photography">📷 Photography</option>
+                            <option value="news">📰 News</option>
+                            <option value="travel">✈️ Travel</option>
+                            <option value="security">🔒 Security</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tags</label>
+                        <input type="text" id="app-tags" class="form-control" placeholder="ai, machine-learning, nlp">
+                        <div class="form-text">Comma-separated tags</div>
+                    </div>
+                </div>
+
+                <hr style="margin:30px 0;border-color:var(--light-gray);">
+
+                <!-- Description -->
+                <h3>Description</h3>
+                <div style="margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">Short Description *</label>
+                        <input type="text" id="app-short-desc" class="form-control" placeholder="Brief description of your app" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Full Description *</label>
+                        <textarea id="app-description" class="form-control" rows="6" placeholder="Detailed description of your app" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Features</label>
+                        <textarea id="app-features" class="form-control" rows="4" placeholder="Key features (one per line)"></textarea>
+                    </div>
+                </div>
+
+                <hr style="margin:30px 0;border-color:var(--light-gray);">
+
+                <!-- Media -->
+                <h3>Media</h3>
+                <div style="margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">App Icon *</label>
+                        <input type="file" id="app-icon" accept="image/*" required>
+                        <div class="form-text">Recommended: 512x512px PNG</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Banner Image</label>
+                        <input type="file" id="app-banner" accept="image/*">
+                        <div class="form-text">Recommended: 1280x720px PNG/JPG</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Screenshots</label>
+                        <input type="file" id="app-screenshots" accept="image/*" multiple>
+                        <div class="form-text">Up to 5 screenshots (PNG/JPG)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Preview Video</label>
+                        <input type="url" id="app-video" class="form-control" placeholder="YouTube or Vimeo URL">
+                    </div>
+                </div>
+
+                <hr style="margin:30px 0;border-color:var(--light-gray);">
+
+                <!-- Pricing & Distribution -->
+                <h3>Pricing & Distribution</h3>
+                <div style="margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">License</label>
+                        <select id="app-license" class="form-control">
+                            <option value="proprietary">Proprietary</option>
+                            <option value="mit">MIT</option>
+                            <option value="apache-2.0">Apache 2.0</option>
+                            <option value="gpl-3.0">GPL 3.0</option>
+                            <option value="bsd-3">BSD 3-Clause</option>
+                            <option value="mpl-2.0">MPL 2.0</option>
+                            <option value="open-source">Open Source</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Platforms</label>
+                        <div style="display:flex;gap:15px;flex-wrap:wrap;margin-top:5px;">
+                            <label><input type="checkbox" value="web" checked> 🌐 Web</label>
+                            <label><input type="checkbox" value="android"> 📱 Android</label>
+                            <label><input type="checkbox" value="ios"> 📱 iOS</label>
+                            <label><input type="checkbox" value="desktop"> 💻 Desktop</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" id="app-free" checked onchange="togglePrice()">
+                            <label for="app-free">Free</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="price-group" style="display:none;">
+                        <label class="form-label">Price ($)</label>
+                        <input type="number" id="app-price" class="form-control" placeholder="0.99" step="0.01" min="0.99">
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="app-open-source">
+                        <label for="app-open-source">Open Source</label>
+                    </div>
+                </div>
+
+                <hr style="margin:30px 0;border-color:var(--light-gray);">
+
+                <!-- Links -->
+                <h3>Links</h3>
+                <div style="margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">Website</label>
+                        <input type="url" id="app-website" class="form-control" placeholder="https://your-app.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Repository</label>
+                        <input type="url" id="app-repo" class="form-control" placeholder="https://github.com/username/repo">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Privacy Policy URL</label>
+                        <input type="url" id="app-privacy" class="form-control" placeholder="https://your-app.com/privacy">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Terms of Service URL</label>
+                        <input type="url" id="app-terms" class="form-control" placeholder="https://your-app.com/terms">
+                    </div>
+                </div>
+
+                <hr style="margin:30px 0;border-color:var(--light-gray);">
+
+                <!-- Project Selection -->
+                <h3>Project</h3>
+                <div style="margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">Select Project</label>
+                        <select id="app-project" class="form-control" required>
+                            <option value="">Select a project...</option>
+                        </select>
+                        <div class="form-text">The project containing the code for this app</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Deployment</label>
+                        <select id="app-deployment" class="form-control">
+                            <option value="">Select a deployment...</option>
+                        </select>
+                        <div class="form-text">The deployment to use for this app</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;font-size:1.1rem;margin-top:20px;">
+                    📤 Publish App
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { showSuccess, showError, logout, toggleTheme, showLoading } from './all.js';
+        import api from './api.js';
+
+        window.logout = logout;
+        window.toggleTheme = toggleTheme;
+
+        window.togglePrice = () => {
+            const isFree = document.getElementById('app-free').checked;
+            document.getElementById('price-group').style.display = isFree ? 'none' : 'block';
+        };
+
+        const loadProjects = async () => {
+            try {
+                const projects = await api.developer.getProjects();
+                const select = document.getElementById('app-project');
+                
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project._id;
+                    option.textContent = project.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load projects:', error);
+            }
+        };
+
+        // Load deployments when project changes
+        document.getElementById('app-project').addEventListener('change', async (e) => {
+            const projectId = e.target.value;
+            const deploymentSelect = document.getElementById('app-deployment');
+            
+            // Clear existing options
+            deploymentSelect.innerHTML = '<option value="">Select a deployment...</option>';
+            
+            if (!projectId) return;
+            
+            try {
+                const deployments = await api.developer.getDeployments(projectId);
+                deployments.forEach(deployment => {
+                    const option = document.createElement('option');
+                    option.value = deployment._id;
+                    option.textContent = `${deployment.version || 'v1.0'} - ${deployment.branch || 'main'} (${deployment.status})`;
+                    deploymentSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load deployments:', error);
+            }
+        });
+
+        window.handlePublish = async (event) => {
+            event.preventDefault();
+            
+            const form = document.getElementById('publish-form');
+            const formData = new FormData();
+            
+            // Gather data
+            const data = {
+                name: document.getElementById('app-name').value,
+                packageName: document.getElementById('app-package').value,
+                version: document.getElementById('app-version').value,
+                category: document.getElementById('app-category').value,
+                tags: document.getElementById('app-tags').value.split(',').map(t => t.trim()).filter(t => t),
+                shortDescription: document.getElementById('app-short-desc').value,
+                description: document.getElementById('app-description').value,
+                features: document.getElementById('app-features').value.split('\n').filter(f => f.trim()),
+                license: document.getElementById('app-license').value,
+                platforms: Array.from(document.querySelectorAll('input[type="checkbox"][value]'))
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value),
+                isFree: document.getElementById('app-free').checked,
+                price: document.getElementById('app-price').value || null,
+                isOpenSource: document.getElementById('app-open-source').checked,
+                website: document.getElementById('app-website').value,
+                repository: document.getElementById('app-repo').value,
+                privacyPolicy: document.getElementById('app-privacy').value,
+                termsOfService: document.getElementById('app-terms').value,
+                projectId: document.getElementById('app-project').value,
+                deploymentId: document.getElementById('app-deployment').value,
+            };
+
+            // Add files
+            const icon = document.getElementById('app-icon').files[0];
+            if (icon) formData.append('icon', icon);
+
+            const banner = document.getElementById('app-banner').files[0];
+            if (banner) formData.append('banner', banner);
+
+            const screenshots = document.getElementById('app-screenshots').files;
+            if (screenshots.length > 0) {
+                for (let i = 0; i < screenshots.length; i++) {
+                    formData.append('screenshots', screenshots[i]);
+                }
+            }
+
+            // Append data as JSON
+            formData.append('data', JSON.stringify(data));
+
+            try {
+                showLoading('#publish-form');
+                await api.developer.publishApp(formData);
+                showSuccess('App published successfully! 🎉');
+                setTimeout(() => window.location.href = 'developers.html', 2000);
+            } catch (error) {
+                showError('Failed to publish app: ' + error.message);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+        });
+    </script>
+</body>
+                          </html>
