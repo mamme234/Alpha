@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Developer Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <img src="logo.png" alt="Platform Logo" height="40">
+                <span>DevPlatform</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="users.html" data-auth>Dashboard</a></li>
+                <li><a href="search.html">Search</a></li>
+                <li><a href="notifications.html" class="active">🔔 Notifications</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+                <li>
+                    <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">
+                        🌓
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding:30px 0;max-width:800px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+            <div>
+                <h1>🔔 Notifications</h1>
+                <p style="color:var(--gray);">Stay updated with your activity</p>
+            </div>
+            <div>
+                <button class="btn btn-outline btn-sm" onclick="markAllRead()">✅ Mark All Read</button>
+                <button class="btn btn-danger btn-sm" onclick="clearAllNotifications()">🗑️ Clear All</button>
+            </div>
+        </div>
+
+        <!-- Notification Filters -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:20px 0;">
+            <button class="btn btn-primary btn-sm" onclick="filterNotifications('all')">All</button>
+            <button class="btn btn-outline btn-sm" onclick="filterNotifications('unread')">Unread</button>
+            <button class="btn btn-outline btn-sm" onclick="filterNotifications('deployment')">🚀 Deployments</button>
+            <button class="btn btn-outline btn-sm" onclick="filterNotifications('review')">⭐ Reviews</button>
+            <button class="btn btn-outline btn-sm" onclick="filterNotifications('download')">📥 Downloads</button>
+            <button class="btn btn-outline btn-sm" onclick="filterNotifications('update')">🔄 Updates</button>
+            <button class="btn btn-outline btn-sm" onclick="filterNotifications('security')">🔒 Security</button>
+            <button class="btn btn-outline btn-sm" onclick="filterNotifications('system')">⚙️ System</button>
+        </div>
+
+        <!-- Notifications List -->
+        <div id="notifications-list">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Loading notifications...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { showSuccess, showError, logout, toggleTheme } from './all.js';
+        import api from './api.js';
+
+        window.logout = logout;
+        window.toggleTheme = toggleTheme;
+
+        let currentFilter = 'all';
+        let notifications = [];
+
+        const loadNotifications = async (filter = 'all') => {
+            currentFilter = filter;
+            
+            try {
+                const data = await api.user.getNotifications();
+                notifications = data;
+                renderNotifications(notifications, filter);
+            } catch (error) {
+                showError('Failed to load notifications: ' + error.message);
+                document.getElementById('notifications-list').innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to load notifications. 
+                        <button class="btn btn-sm btn-outline" onclick="loadNotifications()">Retry</button>
+                    </div>
+                `;
+            }
+        };
+
+        const renderNotifications = (notifications, filter = 'all') => {
+            const container = document.getElementById('notifications-list');
+            
+            let filtered = notifications;
+            if (filter !== 'all') {
+                if (filter === 'unread') {
+                    filtered = notifications.filter(n => !n.isRead);
+                } else {
+                    filtered = notifications.filter(n => n.type === filter);
+                }
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:60px 0;">
+                        <div style="font-size:4rem;margin-bottom:20px;">🔔</div>
+                        <h3>No notifications</h3>
+                        <p style="color:var(--gray);">You're all caught up!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(notification => `
+                <div class="card notification-item ${notification.isRead ? '' : 'unread'}" 
+                     style="padding:20px;margin-bottom:15px;border-left:4px solid ${getNotificationColor(notification.type)};
+                            ${notification.isRead ? 'opacity:0.7;' : ''}"
+                     onclick="markAsRead('${notification._id}')">
+                    <div style="display:flex;justify-content:space-between;align-items:start;gap:15px;">
+                        <div style="flex:1;">
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                <span style="font-size:1.5rem;">${getNotificationIcon(notification.type)}</span>
+                                <h3 style="margin:0;font-size:1rem;">${notification.title}</h3>
+                                ${!notification.isRead ? '<span style="background:var(--primary);color:white;padding:2px 8px;border-radius:12px;font-size:0.7rem;">New</span>' : ''}
+                            </div>
+                            <p style="margin:10px 0;color:var(--gray);">${notification.message}</p>
+                            <div style="display:flex;gap:15px;flex-wrap:wrap;font-size:0.85rem;color:var(--gray);">
+                                <span>🕐 ${new Date(notification.createdAt).toLocaleString()}</span>
+                                ${notification.data?.url ? `<a href="${notification.data.url}" style="color:var(--primary);">View Details →</a>` : ''}
+                            </div>
+                        </div>
+                        ${!notification.isRead ? `
+                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); markAsRead('${notification._id}')">
+                                Mark Read
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const getNotificationColor = (type) => {
+            const colors = {
+                deployment: '#2ecc71',
+                review: '#f39c12',
+                download: '#3498db',
+                update: '#9b59b6',
+                security: '#e74c3c',
+                system: '#95a5a6'
+            };
+            return colors[type] || '#6c63ff';
+        };
+
+        const getNotificationIcon = (type) => {
+            const icons = {
+                deployment: '🚀',
+                review: '⭐',
+                download: '📥',
+                update: '🔄',
+                security: '🔒',
+                system: '⚙️'
+            };
+            return icons[type] || '📢';
+        };
+
+        window.markAsRead = async (notificationId) => {
+            try {
+                await api.user.markNotificationRead(notificationId);
+                await loadNotifications(currentFilter);
+            } catch (error) {
+                showError('Failed to mark as read');
+            }
+        };
+
+        window.markAllRead = async () => {
+            if (!confirm('Mark all notifications as read?')) return;
+            
+            try {
+                await api.user.markAllNotificationsRead();
+                showSuccess('All notifications marked as read');
+                await loadNotifications(currentFilter);
+            } catch (error) {
+                showError('Failed to mark all as read');
+            }
+        };
+
+        window.clearAllNotifications = async () => {
+            if (!confirm('Delete all notifications?')) return;
+            
+            try {
+                await api.user.clearAllNotifications();
+                showSuccess('All notifications cleared');
+                await loadNotifications(currentFilter);
+            } catch (error) {
+                showError('Failed to clear notifications');
+            }
+        };
+
+        window.filterNotifications = (filter) => {
+            // Update button styles
+            document.querySelectorAll('.btn-sm').forEach(btn => {
+                if (btn.textContent.trim().toLowerCase() === filter || 
+                    (filter === 'all' && btn.textContent.trim() === 'All') ||
+                    (filter === 'unread' && btn.textContent.trim() === 'Unread')) {
+                    btn.className = 'btn btn-primary btn-sm';
+                } else {
+                    btn.className = 'btn btn-outline btn-sm';
+                }
+            });
+            
+            loadNotifications(filter);
+        };
+
+        // WebSocket listener for new notifications
+        const setupWebSocketListener = () => {
+            // This would be handled by the WebSocket connection in all.js
+            // The handleWebSocketMessage function would call loadNotifications
+            window.addEventListener('newNotification', () => {
+                loadNotifications(currentFilter);
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNotifications('all');
+            setupWebSocketListener();
+        });
+    </script>
+</body>
+</html>
