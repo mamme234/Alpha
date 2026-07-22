@@ -1,0 +1,36 @@
+{
+  "name": "platform-frontend",
+  "version": 2,
+  "builds": [
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.css",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://alpha-k48a.onrender.com//api/$1"
+    },
+    {
+      "src": "/ws",
+      "dest": "wss://alpha-k48a.onrender.com/"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "API_URL": "https://alpha-k48a.onrender.com//api",
+    "WS_URL": "wss://alpha-k48a.onrender.com/"
+  }
+}
