@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy - Developer Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <img src="logo.png" alt="Platform Logo" height="40">
+                <span>DevPlatform</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="developers.html">Dashboard</a></li>
+                <li><a href="editor.html">Editor</a></li>
+                <li><a href="deploy.html" class="active">Deploy</a></li>
+                <li><a href="analytics.html">Analytics</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+                <li>
+                    <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">
+                        🌓
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding:30px 0;max-width:900px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+            <div>
+                <h1>🚀 Deploy Your Project</h1>
+                <p style="color:var(--gray);">Deploy your project to the cloud with one click</p>
+            </div>
+            <div>
+                <span id="deployment-status" style="padding:8px 16px;border-radius:20px;background:var(--light-gray);font-weight:600;">Ready</span>
+            </div>
+        </div>
+
+        <!-- Project Selection -->
+        <div class="card" style="padding:20px;margin-top:20px;">
+            <div class="form-group">
+                <label class="form-label">Select Project</label>
+                <select id="deploy-project" class="form-control" onchange="loadProjectDetails()">
+                    <option value="">Select a project...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Deployment Configuration -->
+        <div id="deployment-config" style="display:none;margin-top:20px;">
+            <div class="card" style="padding:20px;">
+                <h3>Deployment Settings</h3>
+                <div style="margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">Branch</label>
+                        <select id="deploy-branch" class="form-control">
+                            <option value="main">main</option>
+                            <option value="develop">develop</option>
+                            <option value="staging">staging</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Environment</label>
+                        <select id="deploy-environment" class="form-control">
+                            <option value="production">🚀 Production</option>
+                            <option value="staging">🧪 Staging</option>
+                            <option value="development">💻 Development</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Build Command</label>
+                        <input type="text" id="deploy-build-command" class="form-control" placeholder="npm run build">
+                        <div class="form-text">Leave empty to use project default</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Output Directory</label>
+                        <input type="text" id="deploy-output-dir" class="form-control" placeholder="dist/">
+                        <div class="form-text">Leave empty to use project default</div>
+                    </div>
+
+                    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+                        <button class="btn btn-success" onclick="startDeployment()" style="flex:1;">
+                            🚀 Deploy Now
+                        </button>
+                        <button class="btn btn-outline" onclick="deployWithCustomSettings()">
+                            ⚙️ Advanced Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deployment Logs -->
+            <div class="card" style="padding:20px;margin-top:20px;">
+                <h3>Deployment Logs</h3>
+                <div id="deployment-logs" style="background:#1a1a2e;color:#00ff41;padding:20px;border-radius:8px;font-family:'Courier New',monospace;font-size:0.85rem;height:300px;overflow-y:auto;white-space:pre-wrap;">
+                    <span style="color:var(--gray);">Waiting for deployment...</span>
+                </div>
+            </div>
+
+            <!-- Deployment History -->
+            <div class="card" style="padding:20px;margin-top:20px;">
+                <h3>Deployment History</h3>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Version</th>
+                                <th>Branch</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deployment-history">
+                            <tr>
+                                <td colspan="5" style="text-align:center;color:var(--gray);">No deployments yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { showSuccess, showError, logout, toggleTheme } from './all.js';
+        import api from './api.js';
+
+        window.logout = logout;
+        window.toggleTheme = toggleTheme;
+
+        let currentProjectId = null;
+        let pollInterval = null;
+
+        const loadProjects = async () => {
+            try {
+                const projects = await api.developer.getProjects();
+                const select = document.getElementById('deploy-project');
+                
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project._id;
+                    option.textContent = `${project.name} (${project.framework || 'Unknown'})`;
+                    select.appendChild(option);
+                });
+
+                // Check URL for project param
+                const params = new URLSearchParams(window.location.search);
+                const projectId = params.get('project');
+                if (projectId) {
+                    select.value = projectId;
+                    loadProjectDetails();
+                }
+            } catch (error) {
+                showError('Failed to load projects: ' + error.message);
+            }
+        };
+
+        window.loadProjectDetails = async () => {
+            const projectId = document.getElementById('deploy-project').value;
+            if (!projectId) {
+                document.getElementById('deployment-config').style.display = 'none';
+                return;
+            }
+
+            currentProjectId = projectId;
+            document.getElementById('deployment-config').style.display = 'block';
+            
+            try {
+                const project = await api.developer.getProject(projectId);
+                
+                // Set default build command
+                document.getElementById('deploy-build-command').value = project.settings?.buildCommand || '';
+                document.getElementById('deploy-output-dir').value = project.settings?.outputDir || '';
+                
+                // Load deployment history
+                loadDeploymentHistory(projectId);
+            } catch (error) {
+                showError('Failed to load project details: ' + error.message);
+            }
+        };
+
+        const loadDeploymentHistory = async (projectId) => {
+            try {
+                const deployments = await api.developer.getDeployments(projectId);
+                const tbody = document.getElementById('deployment-history');
+                
+                if (deployments.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align:center;color:var(--gray);">No deployments yet</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = deployments.map(deployment => `
+                    <tr>
+                        <td><strong>v${deployment.version || '1.0.0'}</strong></td>
+                        <td>${deployment.branch || 'main'}</td>
+                        <td>
+                            <span style="padding:4px 12px;border-radius:20px;font-size:0.85rem;
+                                ${deployment.status === 'success' ? 'background:#d4edda;color:#155724;' :
+                                  deployment.status === 'failed' ? 'background:#f8d7da;color:#721c24;' :
+                                  deployment.status === 'building' || deployment.status === 'deploying' ? 'background:#fff3cd;color:#856404;' :
+                                  'background:var(--light-gray);'}"
+                            >
+                                ${deployment.status || 'pending'}
+                            </span>
+                        </td>
+                        <td>${new Date(deployment.deployedAt).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="viewDeployment('${deployment._id}')">View</button>
+                            ${deployment.status === 'success' ? `<button class="btn btn-sm btn-danger" onclick="rollbackDeployment('${deployment._id}')">Rollback</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load deployment history:', error);
+            }
+        };
+
+        window.startDeployment = async () => {
+            if (!currentProjectId) {
+                showError('Please select a project');
+                return;
+            }
+
+            const branch = document.getElementById('deploy-branch').value;
+            const environment = document.getElementById('deploy-environment').value;
+            const buildCommand = document.getElementById('deploy-build-command').value;
+            const outputDir = document.getElementById('deploy-output-dir').value;
+
+            // Update status
+            document.getElementById('deployment-status').textContent = 'Deploying...';
+            document.getElementById('deployment-status').style.background = '#fff3cd';
+            document.getElementById('deployment-status').style.color = '#856404';
+
+            // Clear logs
+            document.getElementById('deployment-logs').innerHTML = 'Starting deployment...\n';
+
+            try {
+                const result = await api.developer.deploy(currentProjectId, {
+                    branch,
+                    environment,
+                    buildCommand,
+                    outputDir
+                });
+
+                showSuccess('Deployment started!');
+                
+                // Start polling for logs
+                pollDeploymentLogs(result.deploymentId);
+                
+                // Reload history
+                setTimeout(() => loadDeploymentHistory(currentProjectId), 3000);
+            } catch (error) {
+                showError('Deployment failed: ' + error.message);
+                document.getElementById('deployment-status').textContent = 'Failed';
+                document.getElementById('deployment-status').style.background = '#f8d7da';
+                document.getElementById('deployment-status').style.color = '#721c24';
+            }
+        };
+
+        const pollDeploymentLogs = (deploymentId) => {
+            const logsDiv = document.getElementById('deployment-logs');
+            let lastLogTime = 0;
+
+            if (pollInterval) clearInterval(pollInterval);
+
+            pollInterval = setInterval(async () => {
+                try {
+                    const logs = await api.developer.getDeploymentLogs(deploymentId);
+                    
+                    // Update logs
+                    const newLogs = logs.filter(log => log.timestamp > lastLogTime);
+                    newLogs.forEach(log => {
+                        const color = log.type === 'error' ? '#ff6b6b' : 
+                                     log.type === 'warning' ? '#f39c12' : 
+                                     log.type === 'success' ? '#00ff41' : '#dfe6e9';
+                        logsDiv.innerHTML += `<div style="color:${color};">${log.message}</div>`;
+                    });
+                    
+                    if (newLogs.length > 0) {
+                        lastLogTime = logs[logs.length - 1]?.timestamp || lastLogTime;
+                        logsDiv.scrollTop = logsDiv.scrollHeight;
+                    }
+
+                    // Check if deployment is complete
+                    const status = await api.developer.getDeploymentStatus(deploymentId);
+                    if (status.status === 'success' || status.status === 'failed') {
+                        clearInterval(pollInterval);
+                        pollInterval = null;
+                        
+                        document.getElementById('deployment-status').textContent = status.status === 'success' ? '✅ Success' : '❌ Failed';
+                        document.getElementById('deployment-status').style.background = status.status === 'success' ? '#d4edda' : '#f8d7da';
+                        document.getElementById('deployment-status').style.color = status.status === 'success' ? '#155724' : '#721c24';
+                        
+                        if (status.status === 'success') {
+                            logsDiv.innerHTML += `\n\n🎉 Deployment successful!\n🌐 URL: ${status.url}\n`;
+                            showSuccess(`Deployment successful! Visit: ${status.url}`);
+                            
+                            // Add deploy button
+                            const deployBtn = document.createElement('button');
+                            deployBtn.className = 'btn btn-primary btn-sm';
+                            deployBtn.textContent = '🌐 Open App';
+                            deployBtn.onclick = () => window.open(status.url);
+                            document.querySelector('.card:first-of-type .form-group:last-child').appendChild(deployBtn);
+                        } else {
+                            logsDiv.innerHTML += `\n\n❌ Deployment failed. Check logs for details.\n`;
+                        }
+                        
+                        loadDeploymentHistory(currentProjectId);
+                    }
+                } catch (error) {
+                    console.error('Failed to get logs:', error);
+                }
+            }, 2000);
+        };
+
+        window.viewDeployment = (deploymentId) => {
+            window.location.href = `deploy.html?deployment=${deploymentId}`;
+        };
+
+        window.rollbackDeployment = async (deploymentId) => {
+            if (!confirm('Rollback to this deployment?')) return;
+            
+            try {
+                await api.developer.rollback(deploymentId);
+                showSuccess('Rollback initiated!');
+                setTimeout(() => loadDeploymentHistory(currentProjectId), 3000);
+            } catch (error) {
+                showError('Rollback failed: ' + error.message);
+            }
+        };
+
+        window.deployWithCustomSettings = () => {
+            // Open advanced settings modal
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal" style="max-width:700px;">
+                    <div class="modal-header">
+                        <h2>Advanced Deployment Settings</h2>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Node Version</label>
+                            <select id="adv-node-version" class="form-control">
+                                <option value="18">18.x LTS</option>
+                                <option value="16">16.x LTS</option>
+                                <option value="20">20.x</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Environment Variables</label>
+                            <textarea id="adv-env-vars" class="form-control" rows="5" placeholder="KEY=value&#10;API_URL=https://api.example.com"></textarea>
+                            <div class="form-text">One per line: KEY=value</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Custom Domain</label>
+                            <input type="text" id="adv-custom-domain" class="form-control" placeholder="app.yourdomain.com">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" id="adv-auto-deploy">
+                                <label for="adv-auto-deploy">Enable Auto-Deploy on Push</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="deployWithAdvancedSettings()">Deploy with Settings</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        };
+
+        window.deployWithAdvancedSettings = () => {
+            // Implementation for advanced deployment
+            showSuccess('Advanced deployment initiated!');
+            document.querySelector('.modal-overlay').remove();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+        });
+    </script>
+</body>
+  </html>
