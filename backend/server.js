@@ -16,12 +16,22 @@ import config from './config.js';
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: config.frontendUrl } });
+const io = new Server(server, { 
+    cors: { 
+        origin: config.frontendUrl || 'https://alpha-g2z9.vercel.app',
+        credentials: true 
+    } 
+});
 
 // Security & Performance
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false // Disable for development
+}));
 app.use(compression());
-app.use(cors({ origin: config.frontendUrl, credentials: true }));
+app.use(cors({ 
+    origin: config.frontendUrl || 'https://alpha-g2z9.vercel.app', 
+    credentials: true 
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -31,6 +41,11 @@ app.use('/api', rateLimit({
   max: 100,
   message: 'Too many requests'
 }));
+
+// Health check endpoint (important for Render)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Routes
 app.use('/api', routes);
@@ -43,7 +58,15 @@ setupSockets(io);
 // Start
 const PORT = config.port || 5000;
 server.listen(PORT, async () => {
-  await connectDB();
-  startScheduler();
-  console.log(`🚀 Server running on port ${PORT}`);
+  try {
+    await connectDB();
+    startScheduler();
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`✅ Health check: http://localhost:${PORT}/health`);
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 });
+
+export { app, server };
