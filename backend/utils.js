@@ -1,105 +1,98 @@
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+// utils.js
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+import slugify from 'slugify';
 
-// ============================================
-// DATABASE CONNECTION
-// ============================================
-
-exports.connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/alpha', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error(`MongoDB Connection Error: ${error.message}`);
-    if (process.env.NODE_ENV === 'production') {
-      console.log('⚠️  Running without database - using in-memory storage');
-      return null;
-    }
-    process.exit(1);
-  }
+// Generate random string
+export const generateRandomString = (length = 32) => {
+  return crypto.randomBytes(length).toString('hex');
 };
 
-// ============================================
-// HELPERS
-// ============================================
+// Generate secure token
+export const generateSecureToken = () => {
+  return crypto.randomBytes(64).toString('base64');
+};
 
-exports.generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'fallback_secret', {
-    expiresIn: process.env.JWT_EXPIRE || '7d'
+// Hash string
+export const hashString = (str) => {
+  return crypto.createHash('sha256').update(str).digest('hex');
+};
+
+// Slug generator
+export const generateSlug = (text) => {
+  return slugify(text, {
+    lower: true,
+    strict: true,
+    remove: /[*+~.()'"!:@]/g,
   });
 };
 
-exports.verifyToken = (token) => {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-  } catch (error) {
-    return null;
-  }
+// Extract file extension
+export const getFileExtension = (filename) => {
+  return path.extname(filename).toLowerCase();
 };
 
-exports.slugify = (text) => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+// Check if file is image
+export const isImage = (mimetype) => {
+  return ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimetype);
 };
 
-exports.generateRandomString = (length = 8) => {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+// Format file size
+export const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-exports.formatDate = (date) => {
-  return new Date(date).toISOString();
+// Parse pagination
+export const parsePagination = (req) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const skip = (page - 1) * limit;
+  return { page, limit, skip };
 };
 
-exports.calculatePercentage = (part, total) => {
-  if (total === 0) return 0;
-  return (part / total) * 100;
+// Build search query
+export const buildSearchQuery = (searchTerm, fields) => {
+  if (!searchTerm) return {};
+  return {
+    $or: fields.map(field => ({
+      [field]: { $regex: searchTerm, $options: 'i' }
+    }))
+  };
 };
 
-exports.groupBy = (array, key) => {
-  return array.reduce((result, item) => {
-    const groupKey = item[key];
-    if (!result[groupKey]) {
-      result[groupKey] = [];
-    }
-    result[groupKey].push(item);
-    return result;
-  }, {});
+// Parse filters
+export const parseFilters = (filters) => {
+  const filterObj = {};
+  if (filters.category) filterObj.category = filters.category;
+  if (filters.price) filterObj.isFree = filters.price === 'free';
+  if (filters.platform) filterObj.platforms = filters.platform;
+  if (filters.tags) filterObj.tags = { $in: filters.tags.split(',') };
+  return filterObj;
 };
 
-exports.sortBy = (array, key, order = 'asc') => {
-  return array.sort((a, b) => {
-    const valA = a[key];
-    const valB = b[key];
-    if (valA < valB) return order === 'asc' ? -1 : 1;
-    if (valA > valB) return order === 'asc' ? 1 : -1;
-    return 0;
-  });
+// Get time range
+export const getTimeRange = (range = '7d') => {
+  const now = new Date();
+  const ranges = {
+    '24h': 24 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000,
+    '90d': 90 * 24 * 60 * 60 * 1000,
+    '1y': 365 * 24 * 60 * 60 * 1000,
+  };
+  const ms = ranges[range] || ranges['7d'];
+  return {
+    start: new Date(now.getTime() - ms),
+    end: now,
+  };
 };
 
-// ============================================
-// VALIDATION HELPERS
-// ============================================
-
-exports.isValidEmail = (email) => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-};
-
-exports.isValidUrl = (url) => {
+// Validate URL
+export const isValidUrl = (url) => {
   try {
     new URL(url);
     return true;
@@ -108,39 +101,75 @@ exports.isValidUrl = (url) => {
   }
 };
 
-exports.isValidPassword = (password) => {
-  return password && password.length >= 6;
-};
-
-// ============================================
-// ENCRYPTION HELPERS
-// ============================================
-
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef';
-const IV_LENGTH = 16;
-
-exports.encrypt = (text) => {
+// Extract domain from URL
+export const extractDomain = (url) => {
   try {
-    const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    return iv.toString('hex') + ':' + encrypted;
-  } catch (error) {
-    return text;
+    const parsed = new URL(url);
+    return parsed.hostname;
+  } catch {
+    return null;
   }
 };
 
-exports.decrypt = (text) => {
+// Mask sensitive data
+export const maskSensitiveData = (data) => {
+  const masked = { ...data };
+  if (masked.password) masked.password = '********';
+  if (masked.token) masked.token = '********';
+  if (masked.secret) masked.secret = '********';
+  if (masked.apiKey) masked.apiKey = '********';
+  return masked;
+};
+
+// Delay function
+export const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Retry function
+export const retry = async (fn, retries = 3, delay = 1000) => {
   try {
-    const parts = text.split(':');
-    const iv = Buffer.from(parts.shift(), 'hex');
-    const encryptedText = parts.join(':');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+    return await fn();
   } catch (error) {
-    return text;
+    if (retries <= 0) throw error;
+    await delay(delay);
+    return retry(fn, retries - 1, delay * 2);
   }
+};
+
+// Convert to camelCase
+export const toCamelCase = (str) => {
+  return str.replace(/([-_][a-z])/g, group =>
+    group.toUpperCase().replace('-', '').replace('_', '')
+  );
+};
+
+// Convert to snake_case
+export const toSnakeCase = (str) => {
+  return str.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+};
+
+// Deep clone
+export const deepClone = (obj) => {
+  return JSON.parse(JSON.stringify(obj));
+};
+
+export default {
+  generateRandomString,
+  generateSecureToken,
+  hashString,
+  generateSlug,
+  getFileExtension,
+  isImage,
+  formatFileSize,
+  parsePagination,
+  buildSearchQuery,
+  parseFilters,
+  getTimeRange,
+  isValidUrl,
+  extractDomain,
+  maskSensitiveData,
+  delay,
+  retry,
+  toCamelCase,
+  toSnakeCase,
+  deepClone,
 };
