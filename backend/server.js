@@ -1,71 +1,49 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const dotenv = require('dotenv');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
+// server.js
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 
-dotenv.config();
-
-// Import routes
-const routes = require('./routes');
-const { errorHandler } = require('./middleware');
-const { connectDB } = require('./utils');
+import { connectDB } from './db.js';
+import routes from './routes.js';
+import { errorHandler, notFound } from './middleware.js';
+import { setupSockets } from './socket.js';
+import { startScheduler } from './scheduler.js';
+import config from './config.js';
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CLIENT_URL || '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
-  }
-});
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: config.frontendUrl } });
 
-// Middleware
+// Security & Performance
 app.use(helmet());
 app.use(compression());
-app.use(cors());
+app.use(cors({ origin: config.frontendUrl, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Rate limiting
+app.use('/api', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests'
+}));
+
 // Routes
 app.use('/api', routes);
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Error handler
+app.use(notFound);
 app.use(errorHandler);
 
-// Socket.io
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-  socket.on('join-project', (projectId) => {
-    socket.join(`project-${projectId}`);
-  });
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
+// WebSocket
+setupSockets(io);
+
+// Start
+const PORT = config.port || 5000;
+server.listen(PORT, async () => {
+  await connectDB();
+  startScheduler();
+  console.log(`🚀 Server running on port ${PORT}`);
 });
-
-// Start server
-const PORT = process.env.PORT || 5000;
-
-const startServer = async () => {
-  try {
-    await connectDB();
-    httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Alpha Backend running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
-
-module.exports = { app, io };
