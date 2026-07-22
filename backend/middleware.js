@@ -1,116 +1,154 @@
-const jwt = require('jsonwebtoken');
-const User = require('./db').User;
-const rateLimit = require('express-rate-limit');
-const multer = require('multer');
+// middleware.js
+import { verifyToken } from './auth.js';
+import { getRedis } from './db.js';
+import config from './config.js';
 
-// ============================================
-// AUTH MIDDLEWARE
-// ============================================
-
-exports.protect = async (req, res, next) => {
+// Authentication
+export const authenticate = async (req, res, next) => {
   try {
-    let token;
-
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ error: 'Not authorized, no token' });
+      return res.status(401).json({ error: 'No token provided' });
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(decoded.id).select('-password');
-    if (!user) {
-      return res.status(401).json({ error: 'Not authorized, user not found' });
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
-
-    req.user = user;
+    
+    req.user = decoded;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
-    return res.status(401).json({ error: 'Not authorized, invalid token' });
+    return res.status(401).json({ error: 'Authentication failed' });
   }
 };
 
-// ============================================
-// RATE LIMITING
-// ============================================
+// Role-based authorization
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
+    next();
+  };
+};
 
-exports.limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests, please try again later.'
-});
+// Rate limiting per user
+export const rateLimitUser = (maxRequests = 100, windowMs = 60000) => {
+  return async (req, res, next) => {
+    const userId = req.user?.userId || req.ip;
+    const key = `rate:${userId}`;
+    const redis = getRedis();
+    
+    const current = await redis.incr(key);
+    if (current === 1) {
+      await redis.expire(key, windowMs / 1000);
+    }
+    
+    if (current > maxRequests) {
+      return res.status(429).json({ 
+        error: 'Too many requests. Please try again later.' 
+      });
+    }
+    
+    next();
+  };
+};
 
-exports.strictLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
-  message: 'Too many requests, please try again later.'
-});
+// Request logging
+export const logger = (req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+  });
+  next();
+};
 
-// ============================================
-// ERROR HANDLER
-// ============================================
-
-exports.errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
-
-  if (err.name === 'ValidationError') {
-    const messages = Object.values(err.errors).map(e => e.message);
-    return res.status(400).json({ error: messages.join(', ') });
-  }
-
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyPattern)[0];
-    return res.status(400).json({ error: `${field} already exists` });
-  }
-
-  if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({ error: 'Token expired' });
-  }
-
+// Error handler
+export const errorHandler = (err, req, res, next) => {
+  console.error('Error:', err.stack);
+  
   const status = err.status || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  // Send error response
   res.status(status).json({
-    error: err.message || 'Internal server error'
+    error: message,
+    ...(config.nodeEnv === 'development' && { stack: err.stack }),
   });
 };
 
-// ============================================
-// UPLOAD MIDDLEWARE
-// ============================================
+// 404 handler
+export const notFound = (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+};
+
+// File upload middleware (using multer)
+import multer from 'multer';
+import path from 'path';
 
 const storage = multer.memoryStorage();
-
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    'application/javascript',
-    'text/javascript',
-    'application/json',
-    'text/plain',
-    'text/html',
-    'text/css',
-    'application/zip',
-    'application/x-zip-compressed',
-    'application/octet-stream'
-  ];
-  
-  if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.js') || file.originalname.endsWith('.json')) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'application/zip'];
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type'), false);
   }
 };
 
-exports.upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 50 * 1024 * 1024
-  },
-  fileFilter: fileFilter
+export const upload = multer({
+  storage,
+  limits: { fileSize: config.limits.maxFileSize },
+  fileFilter,
 });
+
+// Validation middleware factory
+export const validate = (schema) => {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        details: error.details.map(d => d.message) 
+      });
+    }
+    next();
+  };
+};
+
+// CORS (though we handle in server)
+export const corsOptions = {
+  origin: config.frontendUrl,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
+// Cache middleware
+export const cache = (duration = 60) => {
+  return async (req, res, next) => {
+    const key = `cache:${req.originalUrl}`;
+    const redis = getRedis();
+    
+    const cached = await redis.get(key);
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
+    
+    // Store original send
+    const originalSend = res.json;
+    res.json = function(data) {
+      redis.setex(key, duration, JSON.stringify(data));
+      originalSend.call(this, data);
+    };
+    
+    next();
+  };
+};
