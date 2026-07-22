@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor - Developer Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        .navbar {
+            position: relative;
+            z-index: 100;
+        }
+        .editor-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: calc(100vh - 70px);
+            gap: 0;
+        }
+        .editor-sidebar {
+            background: #1e1e2e;
+            color: #dfe6e9;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid #2d2d44;
+        }
+        .editor-sidebar h4 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+        .file-tree {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .file-tree li {
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .file-tree li:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .file-tree .folder {
+            font-weight: 600;
+            color: #ffd93d;
+        }
+        .file-tree .file {
+            padding-left: 24px;
+            color: #dfe6e9;
+        }
+        .file-tree .file.active {
+            background: rgba(108, 99, 255, 0.3);
+            color: #fff;
+        }
+        .file-tree .icon {
+            margin-right: 8px;
+        }
+        .editor-main {
+            display: flex;
+            flex-direction: column;
+            background: #1e1e2e;
+        }
+        .editor-tabs {
+            display: flex;
+            background: #2d2d44;
+            padding: 0 10px;
+            min-height: 40px;
+            border-bottom: 1px solid #3d3d54;
+            overflow-x: auto;
+        }
+        .editor-tab {
+            padding: 8px 16px;
+            color: #8b8ba0;
+            cursor: pointer;
+            border-right: 1px solid #3d3d54;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .editor-tab:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .editor-tab.active {
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+        }
+        .editor-tab .close {
+            margin-left: 8px;
+            cursor: pointer;
+            opacity: 0.5;
+            font-size: 1.1rem;
+        }
+        .editor-tab .close:hover {
+            opacity: 1;
+        }
+        .editor-content {
+            flex: 1;
+            position: relative;
+        }
+        #editor-main {
+            width: 100%;
+            height: 100%;
+        }
+        .editor-terminal {
+            background: #1a1a2e;
+            color: #00ff41;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #2d2d44;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+        .editor-terminal .prompt {
+            color: #00ff41;
+        }
+        .editor-terminal .error {
+            color: #ff6b6b;
+        }
+        .editor-terminal .warning {
+            color: #f39c12;
+        }
+        .editor-toolbar {
+            display: flex;
+            gap: 10px;
+            padding: 8px 15px;
+            background: #2d2d44;
+            border-bottom: 1px solid #3d3d54;
+            align-items: center;
+        }
+        .editor-toolbar .btn {
+            padding: 4px 12px;
+            font-size: 0.85rem;
+        }
+        .editor-toolbar .status {
+            color: #8b8ba0;
+            font-size: 0.85rem;
+            margin-left: auto;
+        }
+        .editor-sidebar .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .editor-sidebar .action-buttons .btn {
+            width: 100%;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        @media (max-width: 768px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .editor-sidebar {
+                height: 300px;
+            }
+            .editor-main {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <img src="logo.png" alt="Platform Logo" height="40">
+                <span>DevPlatform</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="developers.html">Dashboard</a></li>
+                <li><a href="editor.html" class="active">Editor</a></li>
+                <li><a href="deploy.html">Deploy</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="editor-container">
+        <!-- Sidebar -->
+        <div class="editor-sidebar">
+            <h4>📁 Explorer</h4>
+            <div id="file-tree-container">
+                <div class="loading-spinner" style="padding:20px;">
+                    <div class="spinner" style="width:20px;height:20px;"></div>
+                    <p style="font-size:0.85rem;margin-top:10px;">Loading files...</p>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary btn-sm" onclick="createNewFile()">📄 New File</button>
+                <button class="btn btn-outline btn-sm" onclick="createNewFolder()">📁 New Folder</button>
+                <button class="btn btn-success btn-sm" onclick="deployFromEditor()">🚀 Deploy</button>
+                <button class="btn btn-secondary btn-sm" onclick="gitCommit()">💾 Commit</button>
+            </div>
+        </div>
+
+        <!-- Main Editor Area -->
+        <div class="editor-main">
+            <div class="editor-toolbar">
+                <button class="btn btn-sm btn-outline" onclick="saveFile()">💾 Save</button>
+                <button class="btn btn-sm btn-outline" onclick="undoAction()">↩️ Undo</button>
+                <button class="btn btn-sm btn-outline" onclick="redoAction()">↪️ Redo</button>
+                <button class="btn btn-sm btn-outline" onclick="formatCode()">✨ Format</button>
+                <span class="status" id="editor-status">Ready</span>
+            </div>
+
+            <!-- Tabs -->
+            <div class="editor-tabs" id="editor-tabs">
+                <!-- Tabs rendered dynamically -->
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-content">
+                <div id="editor-main"></div>
+            </div>
+
+            <!-- Terminal -->
+            <div class="editor-terminal" id="terminal">
+                <span class="prompt">$ </span>Welcome to the Developer Platform Editor<br>
+                <span class="prompt">$ </span>Type commands or view logs here<br>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { showSuccess, showError, logout, connectWebSocket } from './all.js';
+        import api from './api.js';
+
+        window.logout = logout;
+
+        let editor = null;
+        let currentProjectId = null;
+        let currentFile = null;
+        let openTabs = [];
+        let fileTree = {};
+        let isSaving = false;
+
+        // Get project ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const projectId = params.get('project');
+
+        if (!projectId) {
+            window.location.href = 'developers.html';
+        }
+
+        currentProjectId = projectId;
+
+        // Load Monaco Editor
+        const loadEditor = async () => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js';
+            
+            script.onload = () => {
+                require.config({
+                    paths: {
+                        vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs'
+                    }
+                });
+                
+                require(['vs/editor/editor.main'], () => {
+                    initMonacoEditor();
+                });
+            };
+            
+            document.head.appendChild(script);
+        };
+
+        const initMonacoEditor = async () => {
+            // Create editor
+            editor = monaco.editor.create(document.getElementById('editor-main'), {
+                value: '// Loading project files...\n// Select a file from the explorer',
+                language: 'javascript',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: true },
+                scrollBeyondLastLine: false,
+                renderWhitespace: 'selection',
+                fontFamily: 'Fira Code, monospace',
+                fontLigatures: true,
+                tabSize: 2,
+                wordWrap: 'on',
+            });
+
+            // Load file tree
+            await loadFileTree();
+
+            // Auto-save
+            let saveTimeout;
+            editor.onDidChangeContent(() => {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    saveFile();
+                }, 2000);
+            });
+
+            // Keyboard shortcuts
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+                saveFile();
+            });
+
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
+                editor.getAction('actions.find').run();
+            });
+
+            // Update status
+            document.getElementById('editor-status').textContent = 'Ready';
+            
+            // Connect WebSocket
+            connectWebSocket();
+        };
+
+        const loadFileTree = async () => {
+            try {
+                const files = await api.developer.getProjectFiles(currentProjectId);
+                fileTree = buildFileTree(files);
+                renderFileTree(fileTree);
+                
+                // Auto-open first file if available
+                if (files.length > 0) {
+                    const firstFile = files[0];
+                    await openFile(firstFile.path);
+                }
+            } catch (error) {
+                showError('Failed to load file tree: ' + error.message);
+                document.getElementById('file-tree-container').innerHTML = `
+                    <p style="color:#ff6b6b;font-size:0.9rem;">Failed to load files</p>
+                    <button class="btn btn-sm btn-outline" onclick="loadFileTree()">Retry</button>
+                `;
+            }
+        };
+
+        const buildFileTree = (files) => {
+            const tree = {};
+            
+            files.forEach(file => {
+                const parts = file.path.split('/');
+                let current = tree;
+                
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i];
+                    if (i === parts.length - 1) {
+                        current[part] = { type: 'file', ...file };
+                    } else {
+                        if (!current[part]) {
+                            current[part] = { type: 'folder', children: {} };
+                        }
+                        current = current[part].children;
+                    }
+                }
+            });
+            
+            return tree;
+        };
+
+        const renderFileTree = (tree, prefix = '') => {
+            const container = document.getElementById('file-tree-container');
+            const html = renderTreeNodes(tree, prefix);
+            container.innerHTML = html;
+            
+            // Add click handlers
+            container.querySelectorAll('.file-node').forEach(el => {
+                el.addEventListener('click', () => {
+                    const path = el.dataset.path;
+                    if (path) {
+                        openFile(path);
+                    }
+                });
+            });
+
+            container.querySelectorAll('.folder-node').forEach(el => {
+                const toggle = el.querySelector('.folder-toggle');
+                const children = el.querySelector('.folder-children');
+                
+                if (toggle) {
+                    toggle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const isOpen = children.style.display !== 'none';
+                        children.style.display = isOpen ? 'none' : 'block';
+                        toggle.textContent = isOpen ? '📁' : '📂';
+                    });
+                }
+            });
+        };
+
+        const renderTreeNodes = (tree, prefix = '') => {
+            let html = '<ul class="file-tree">';
+            
+            Object.entries(tree).forEach(([name, node]) => {
+                const path = prefix ? `${prefix}/${name}` : name;
+                
+                if (node.type === 'folder') {
+                    html += `
+                        <li class="folder-node">
+                            <span class="folder-toggle">📁</span>
+                            <span>${name}</span>
+                            <div class="folder-children" style="display:block;">
+                                ${renderTreeNodes(node.children, path)}
+                            </div>
+                        </li>
+                    `;
+                } else {
+                    const icon = getFileIcon(name);
+                    const isActive = path === currentFile ? 'active' : '';
+                    html += `
+                        <li class="file-node ${isActive}" data-path="${path}">
+                            <span class="icon">${icon}</span>
+                            <span>${name}</span>
+                        </li>
+                    `;
+                }
+            });
+            
+            html += '</ul>';
+            return html;
+        };
+
+        const getFileIcon = (filename) => {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                js: '📜',
+                ts: '📘',
+                html: '🌐',
+                css: '🎨',
+                scss: '🎨',
+                json: '📋',
+                md: '📝',
+                py: '🐍',
+                php: '🐘',
+                java: '☕',
+                go: '🐹',
+                rs: '🦀',
+                cpp: '⚙️',
+                c: '⚙️',
+                h: '📐',
+                sh: '💻',
+                yml: '📄',
+                yaml: '📄',
+                xml: '📄',
+                sql: '🗄️',
+                png: '🖼️',
+                jpg: '🖼️',
+                jpeg: '🖼️',
+                gif: '🖼️',
+                svg: '🖼️',
+                ico: '🖼️',
+                wav: '🔊',
+                mp3: '🔊',
+                mp4: '🎬',
+                webm: '🎬',
+                zip: '📦',
+                tar: '📦',
+                gz: '📦'
+            };
+            return icons[ext] || '📄';
+        };
+
+        const openFile = async (path) => {
+            try {
+                const content = await api.developer.getProjectFile(currentProjectId, path);
+                
+                if (!openTabs.includes(path)) {
+                    openTabs.push(path);
+                }
+                
+                currentFile = path;
+                
+                // Update editor
+                const language = getLanguageFromPath(path);
+                monaco.editor.setModelLanguage(editor.getModel(), language);
+                editor.setValue(content);
+                
+                // Update tabs
+                renderTabs();
+                
+                // Update file tree
+                document.querySelectorAll('.file-node').forEach(el => {
+                    el.classList.toggle('active', el.dataset.path === path);
+                });
+                
+                document.getElementById('editor-status').textContent = `Editing: ${path}`;
+            } catch (error) {
+                showError('Failed to open file: ' + error.message);
+            }
+        };
+
+        const getLanguageFromPath = (path) => {
+            const ext = path.split('.').pop().toLowerCase();
+            const languages = {
+                js: 'javascript',
+                ts: 'typescript',
+                jsx: 'javascript',
+                tsx: 'typescript',
+                html: 'html',
+                css: 'css',
+                scss: 'scss',
+                json: 'json',
+                md: 'markdown',
+                py: 'python',
+                php: 'php',
+                java: 'java',
+                go: 'go',
+                rs: 'rust',
+                cpp: 'cpp',
+                c: 'c',
+                sh: 'shell',
+                yml: 'yaml',
+                yaml: 'yaml',
+                xml: 'xml',
+                sql: 'sql'
+            };
+            return languages[ext] || 'plaintext';
+        };
+
+        const renderTabs = () => {
+            const container = document.getElementById('editor-tabs');
+            
+            container.innerHTML = openTabs.map(path => `
+                <div class="editor-tab ${path === currentFile ? 'active' : ''}" onclick="switchTab('${path}')">
+                    <span>${path.split('/').pop()}</span>
+                    <span class="close" onclick="event.stopPropagation(); closeTab('${path}')">×</span>
+                </div>
+            `).join('');
+        };
+
+        window.switchTab = (path) => {
+            openFile(path);
+        };
+
+        window.closeTab = (path) => {
+            openTabs = openTabs.filter(t => t !== path);
+            renderTabs();
+            
+            if (path === currentFile) {
+                if (openTabs.length > 0) {
+                    openFile(openTabs[0]);
+                } else {
+                    currentFile = null;
+                    editor.setValue('// No file open\n// Select a file from the explorer');
+                    document.getElementById('editor-status').textContent = 'No file open';
+                }
+            }
+        };
+
+        window.saveFile = async () => {
+            if (!currentFile || !editor || isSaving) return;
+            
+            isSaving = true;
+            document.getElementById('editor-status').textContent = 'Saving...';
+            
+            try {
+                const content = editor.getValue();
+                await api.developer.saveProjectFile(currentProjectId, {
+                    path: currentFile,
+                    content
+                });
+                
+                document.getElementById('editor-status').textContent = `Saved: ${currentFile}`;
+                setTimeout(() => {
+                    document.getElementById('editor-status').textContent = `Editing: ${currentFile}`;
+                }, 1000);
+            } catch (error) {
+                showError('Failed to save file: ' + error.message);
+                document.getElementById('editor-status').textContent = 'Save failed';
+            } finally {
+                isSaving = false;
+            }
+        };
+
+        window.createNewFile = async () => {
+            const name = prompt('Enter file name:');
+            if (!name) return;
+            
+            const path = name.startsWith('/') ? name : `/${name}`;
+            
+            try {
+                await api.developer.createFile(currentProjectId, {
+                    path,
+                    content: ''
+                });
+                await loadFileTree();
+                await openFile(path);
+                showSuccess('File created successfully!');
+            } catch (error) {
+                showError('Failed to create file: ' + error.message);
+            }
+        };
+
+        window.createNewFolder = async () => {
+            const name = prompt('Enter folder name:');
+            if (!name) return;
+            
+            try {
+                await api.developer.createFolder(currentProjectId, {
+                    path: `/${name}`
+                });
+                await loadFileTree();
+                showSuccess('Folder created successfully!');
+            } catch (error) {
+                showError('Failed to create folder: ' + error.message);
+            }
+        };
+
+        window.deployFromEditor = () => {
+            window.location.href = `deploy.html?project=${currentProjectId}`;
+        };
+
+        window.gitCommit = async () => {
+            const message = prompt('Enter commit message:');
+            if (!message) return;
+            
+            try {
+                await api.developer.gitCommit(currentProjectId, {
+                    message,
+                    files: openTabs
+                });
+                showSuccess('Commit successful!');
+            } catch (error) {
+                showError('Commit failed: ' + error.message);
+            }
+        };
+
+        window.undoAction = () => {
+            if (editor) editor.trigger('keyboard', 'undo');
+        };
+
+        window.redoAction = () => {
+            if (editor) editor.trigger('keyboard', 'redo');
+        };
+
+        window.formatCode = () => {
+            if (editor) editor.getAction('editor.action.formatDocument').run();
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadEditor);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (editor && currentFile) {
+                // Auto-save on page leave
+                const content = editor.getValue();
+                api.developer.saveProjectFile(currentProjectId, {
+                    path: currentFile,
+                    content
+                }).catch(() => {});
+            }
+        });
+    </script>
+</body>
+  </html>
