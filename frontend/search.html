@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - Developer Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <img src="logo.png" alt="Platform Logo" height="40">
+                <span>DevPlatform</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="search.html" class="active">Search</a></li>
+                <li><a href="users.html" data-auth>Dashboard</a></li>
+                <li><a href="#" onclick="logout()" data-auth>Logout</a></li>
+                <li><a href="login.html" data-guest>Login</a></li>
+                <li>
+                    <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">
+                        🌓
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding:30px 0;">
+        <h1>Search Apps</h1>
+        <p style="color:var(--gray);">Find the perfect app for your needs</p>
+
+        <!-- Search Bar -->
+        <div style="margin:30px 0;">
+            <form id="search-form" onsubmit="handleSearch(event)">
+                <div style="display:flex;gap:10px;">
+                    <input type="text" id="search-query" class="form-control" placeholder="Search by name, developer, category..." style="flex:1;" value="${new URLSearchParams(window.location.search).get('q') || ''}">
+                    <button type="submit" class="btn btn-primary">🔍 Search</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filters -->
+        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:30px;padding:20px;background:var(--lighter);border-radius:8px;">
+            <div>
+                <label class="form-label" style="font-size:0.85rem;">Category</label>
+                <select id="filter-category" class="form-control" onchange="applyFilters()">
+                    <option value="">All Categories</option>
+                    <option value="ai">🤖 AI</option>
+                    <option value="education">📚 Education</option>
+                    <option value="business">💼 Business</option>
+                    <option value="finance">💰 Finance</option>
+                    <option value="health">🏥 Health</option>
+                    <option value="social">👥 Social</option>
+                    <option value="entertainment">🎭 Entertainment</option>
+                    <option value="games">🎮 Games</option>
+                    <option value="productivity">⚡ Productivity</option>
+                    <option value="tools">🔧 Tools</option>
+                    <option value="shopping">🛍️ Shopping</option>
+                    <option value="music">🎵 Music</option>
+                    <option value="photography">📷 Photography</option>
+                    <option value="news">📰 News</option>
+                    <option value="travel">✈️ Travel</option>
+                    <option value="security">🔒 Security</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label" style="font-size:0.85rem;">Platform</label>
+                <select id="filter-platform" class="form-control" onchange="applyFilters()">
+                    <option value="">All Platforms</option>
+                    <option value="web">🌐 Web</option>
+                    <option value="android">📱 Android</option>
+                    <option value="ios">📱 iOS</option>
+                    <option value="desktop">💻 Desktop</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label" style="font-size:0.85rem;">Price</label>
+                <select id="filter-price" class="form-control" onchange="applyFilters()">
+                    <option value="">All</option>
+                    <option value="free">Free</option>
+                    <option value="paid">Paid</option>
+                    <option value="open-source">Open Source</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label" style="font-size:0.85rem;">Sort By</label>
+                <select id="filter-sort" class="form-control" onchange="applyFilters()">
+                    <option value="relevance">Relevance</option>
+                    <option value="downloads">Most Downloaded</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="newest">Newest</option>
+                    <option value="updated">Recently Updated</option>
+                </select>
+            </div>
+
+            <div style="display:flex;align-items:flex-end;">
+                <button class="btn btn-outline" onclick="resetFilters()">Reset Filters</button>
+            </div>
+        </div>
+
+        <!-- Results Count -->
+        <div id="results-count" style="margin-bottom:20px;color:var(--gray);">
+            Loading results...
+        </div>
+
+        <!-- Results -->
+        <div id="search-results" class="card-grid">
+            <!-- Loaded dynamically -->
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" style="display:flex;justify-content:center;gap:10px;margin-top:30px;">
+            <!-- Loaded dynamically -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { performSearch, showError, logout, toggleTheme, showLoading, hideLoading } from './all.js';
+        import api from './api.js';
+
+        window.logout = logout;
+        window.toggleTheme = toggleTheme;
+
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentQuery = '';
+        let currentFilters = {};
+
+        const getUrlParams = () => {
+            return Object.fromEntries(new URLSearchParams(window.location.search));
+        };
+
+        const handleSearch = async (event) => {
+            event.preventDefault();
+            const query = document.getElementById('search-query').value;
+            const params = new URLSearchParams(window.location.search);
+            params.set('q', query);
+            params.set('page', '1');
+            window.history.pushState({}, '', `?${params.toString()}`);
+            await loadSearchResults(1);
+        };
+
+        window.applyFilters = async () => {
+            await loadSearchResults(1);
+        };
+
+        window.resetFilters = () => {
+            document.getElementById('filter-category').value = '';
+            document.getElementById('filter-platform').value = '';
+            document.getElementById('filter-price').value = '';
+            document.getElementById('filter-sort').value = 'relevance';
+            applyFilters();
+        };
+
+        const loadSearchResults = async (page = 1) => {
+            const params = getUrlParams();
+            const query = params.q || document.getElementById('search-query').value;
+            const category = document.getElementById('filter-category').value;
+            const platform = document.getElementById('filter-platform').value;
+            const price = document.getElementById('filter-price').value;
+            const sort = document.getElementById('filter-sort').value;
+
+            currentQuery = query;
+            currentFilters = { category, platform, price, sort };
+            currentPage = page;
+
+            try {
+                showLoading('#search-results');
+                
+                const results = await api.public.search({
+                    q: query,
+                    category,
+                    platform,
+                    price,
+                    sort,
+                    page,
+                    limit: 20
+                });
+
+                renderResults(results);
+                
+                document.getElementById('results-count').textContent = 
+                    `Found ${results.total} results${results.total !== 1 ? 's' : ''}`;
+                
+                renderPagination(results.total, page);
+                
+                hideLoading('#search-results');
+            } catch (error) {
+                showError('Search failed: ' + error.message);
+                hideLoading('#search-results');
+            }
+        };
+
+        const renderResults = (results) => {
+            const container = document.getElementById('search-results');
+            
+            if (!results.data || results.data.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:60px 0;">
+                        <div style="font-size:4rem;margin-bottom:20px;">🔍</div>
+                        <h3>No apps found</h3>
+                        <p style="color:var(--gray);">Try adjusting your search terms or filters</p>
+                        <button class="btn btn-primary" onclick="resetFilters()">Reset Filters</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = results.data.map(app => `
+                <div class="app-card" onclick="window.location.href='app.html?id=${app._id}'">
+                    <img src="${app.icon || '/assets/default-app-icon.png'}" alt="${app.name}" class="app-card-image" 
+                         onerror="this.src='/assets/default-app-icon.png'">
+                    <div class="app-card-content">
+                        <h3 class="app-card-title">${app.name}</h3>
+                        <p class="app-card-developer">by ${app.developerName || 'Unknown'}</p>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:5px 0;">
+                            ${app.tags?.slice(0, 3).map(tag => 
+                                `<span style="background:var(--lighter);padding:2px 8px;border-radius:12px;font-size:0.75rem;">#${tag}</span>`
+                            ).join('')}
+                        </div>
+                        <div class="app-card-rating">
+                            ⭐ ${app.rating?.toFixed(1) || 'N/A'}
+                            <span style="color:var(--gray);font-size:0.85rem;">(${app.totalReviews || 0} reviews)</span>
+                            <span style="color:var(--gray);font-size:0.85rem;">• 📥 ${app.downloads || 0}</span>
+                        </div>
+                        <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;">
+                            ${app.isOpenSource ? '<span style="background:#d4edda;padding:2px 8px;border-radius:12px;font-size:0.75rem;">Open Source</span>' : ''}
+                            ${app.isFree ? '<span style="background:#d1ecf1;padding:2px 8px;border-radius:12px;font-size:0.75rem;">Free</span>' : `<span style="background:#fff3cd;padding:2px 8px;border-radius:12px;font-size:0.75rem;">$${app.price || '0.99'}</span>`}
+                            ${app.isVerified ? '<span style="background:#cce5ff;padding:2px 8px;border-radius:12px;font-size:0.75rem;">✅ Verified</span>' : ''}
+                        </div>
+                        <div class="app-card-actions">
+                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); downloadApp('${app._id}')">
+                                📥 Download
+                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); toggleFavorite('${app._id}')">
+                                ♥
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const renderPagination = (total, currentPage) => {
+            const container = document.getElementById('pagination');
+            const limit = 20;
+            const totalPages = Math.ceil(total / limit);
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            
+            // Previous
+            if (currentPage > 1) {
+                html += `<button class="btn btn-outline btn-sm" onclick="goToPage(${currentPage - 1})">←</button>`;
+            }
+            
+            // Page numbers
+            const maxVisible = 5;
+            let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let end = Math.min(totalPages, start + maxVisible - 1);
+            
+            if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+            }
+            
+            if (start > 1) {
+                html += `<button class="btn btn-outline btn-sm" onclick="goToPage(1)">1</button>`;
+                if (start > 2) {
+                    html += `<span style="padding:0 10px;">...</span>`;
+                }
+            }
+            
+            for (let i = start; i <= end; i++) {
+                html += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline'} btn-sm" onclick="goToPage(${i})">${i}</button>`;
+            }
+            
+            if (end < totalPages) {
+                if (end < totalPages - 1) {
+                    html += `<span style="padding:0 10px;">...</span>`;
+                }
+                html += `<button class="btn btn-outline btn-sm" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+            
+            // Next
+            if (currentPage < totalPages) {
+                html += `<button class="btn btn-outline btn-sm" onclick="goToPage(${currentPage + 1})">→</button>`;
+            }
+            
+            container.innerHTML = html;
+        };
+
+        window.goToPage = (page) => {
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', page);
+            window.history.pushState({}, '', `?${params.toString()}`);
+            loadSearchResults(page);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // Search on enter in filter dropdowns
+        document.querySelectorAll('#filter-category, #filter-platform, #filter-price, #filter-sort').forEach(el => {
+            el.addEventListener('change', applyFilters);
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = getUrlParams();
+            const query = params.q || '';
+            if (query) {
+                document.getElementById('search-query').value = query;
+            }
+            loadSearchResults(parseInt(params.page) || 1);
+        });
+    </script>
+</body>
+  </html>
