@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Developer Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <div class="container" style="max-width:400px;margin:80px auto;">
+        <div style="text-align:center;margin-bottom:40px;">
+            <a href="index.html">
+                <img src="logo.png" alt="Platform Logo" height="50">
+            </a>
+            <h1 style="margin-top:20px;">Welcome Back</h1>
+            <p style="color:var(--gray);">Sign in to your account</p>
+        </div>
+
+        <div class="card" style="padding:40px;">
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                    <div style="text-align:right;margin-top:5px;">
+                        <a href="#" onclick="showForgotPassword()" style="font-size:0.85rem;color:var(--primary);">Forgot password?</a>
+                    </div>
+                </div>
+
+                <div class="form-group" id="2fa-container" style="display:none;">
+                    <label class="form-label">Two-Factor Authentication</label>
+                    <input type="text" id="2fa-code" class="form-control" placeholder="Enter 6-digit code" maxlength="6">
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" id="remember" checked>
+                    <label for="remember">Remember me</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;font-size:1.1rem;">
+                    Sign In
+                </button>
+            </form>
+
+            <div style="text-align:center;margin-top:20px;padding-top:20px;border-top:1px solid var(--light-gray);">
+                <p>Don't have an account? <a href="signup.html" style="color:var(--primary);font-weight:600;">Sign Up</a></p>
+                <div style="margin-top:15px;">
+                    <button class="btn btn-outline" style="width:100%;" onclick="handleSocialLogin('github')">
+                        🔗 Continue with GitHub
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { login } from './all.js';
+        
+        window.handleLogin = async (event) => {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const twoFactorCode = document.getElementById('2fa-code').value;
+            
+            try {
+                await login(email, password, twoFactorCode);
+                // Redirect to appropriate dashboard
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (user.role === 'developer' || user.isDeveloper) {
+                    window.location.href = 'developers.html';
+                } else {
+                    window.location.href = 'users.html';
+                }
+            } catch (error) {
+                // Show error in form
+                const form = document.getElementById('login-form');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger';
+                errorDiv.textContent = error.message;
+                
+                const existingError = form.querySelector('.alert-danger');
+                if (existingError) existingError.remove();
+                
+                form.prepend(errorDiv);
+            }
+        };
+        
+        window.showForgotPassword = () => {
+            const email = prompt('Enter your email address to reset your password:');
+            if (email) {
+                // Call password reset API
+                alert('Password reset link sent to your email');
+            }
+        };
+        
+        window.handleSocialLogin = (provider) => {
+            window.location.href = `/auth/${provider}`;
+        };
+    </script>
+</body>
+</html>
