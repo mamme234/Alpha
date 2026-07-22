@@ -1,248 +1,256 @@
-// Alpha Platform - Main JavaScript
-// Shared across all pages
+// main.js
+import api from './api.js';
+import config from './config.js';
 
-// ============================================
-// CONFIGURATION
-// ============================================
-
-const CONFIG = {
-    API_URL: 'https://alpha-k48a.onrender.com/api',
-    APP_NAME: 'Alpha',
-    VERSION: '1.0.0'
-};
-
-console.log('🚀 Alpha v' + CONFIG.VERSION);
-console.log('📍 API:', CONFIG.API_URL);
-
-// ============================================
-// STATE
-// ============================================
-
-const state = {
-    currentUser: null,
-    projects: [],
-    apps: [],
-    selectedCategory: 'all',
-    currentFilter: 'trending'
-};
-
-// ============================================
-// API
-// ============================================
-
-const API = {
-    baseURL: CONFIG.API_URL,
-
-    async request(endpoint, options = {}) {
-        const token = localStorage.getItem('alpha_token');
-        const headers = {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...options.headers
-        };
-
-        try {
-            const response = await fetch(`${this.baseURL}${endpoint}`, {
-                ...options,
-                headers
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || `API Error: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
-    },
-
-    // Auth
-    async login(email, password) {
-        const data = await this.request('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password })
-        });
-        if (data.token) {
-            localStorage.setItem('alpha_token', data.token);
-            localStorage.setItem('alpha_user', JSON.stringify(data.user));
-            state.currentUser = data.user;
-        }
-        return data;
-    },
-
-    async logout() {
-        localStorage.removeItem('alpha_token');
-        localStorage.removeItem('alpha_user');
-        state.currentUser = null;
-        window.location.href = '/';
-    },
-
-    getToken() {
-        return localStorage.getItem('alpha_token');
-    },
-
-    isAuthenticated() {
-        return !!this.getToken();
-    },
-
-    // Apps
-    async getApps(params = {}) {
-        const query = new URLSearchParams(params).toString();
-        return this.request(`/apps?${query}`);
-    },
-
-    async getFeaturedApps() {
-        return this.request('/apps/featured');
-    },
-
-    async getTrendingApps() {
-        return this.request('/apps/trending');
-    },
-
-    async getNewApps() {
-        return this.request('/apps/new');
-    },
-
-    async searchApps(query) {
-        return this.request(`/apps/search?q=${encodeURIComponent(query)}`);
-    },
-
-    async getAppsByCategory(category) {
-        return this.request(`/apps/category/${category}`);
-    },
-
-    // Projects
-    async getProjects() {
-        return this.request('/projects');
-    },
-
-    async createProject(data) {
-        return this.request('/projects', {
-            method: 'POST',
-            body: JSON.stringify(data)
-        });
-    },
-
-    async deployProject(projectId) {
-        return this.request(`/deployments/project/${projectId}`, {
-            method: 'POST'
-        });
-    },
-
-    // Analytics
-    async getProjectAnalytics(projectId) {
-        return this.request(`/analytics/project/${projectId}`);
+class App {
+  constructor() {
+    this.currentUser = null;
+    this.init();
+  }
+  
+  async init() {
+    // Check authentication
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        await this.loadUser();
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      }
     }
-};
-
-// ============================================
-// UI HELPERS
-// ============================================
-
-const UI = {
-    showToast(message, type = 'info', duration = 3000) {
-        const colors = {
-            success: 'bg-green-500',
-            error: 'bg-red-500',
-            warning: 'bg-yellow-500',
-            info: 'bg-blue-500'
-        };
-        const icons = {
-            success: '✅',
-            error: '❌',
-            warning: '⚠️',
-            info: 'ℹ️'
-        };
-
-        const toast = document.createElement('div');
-        toast.className = `fixed bottom-6 right-6 ${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 toast-enter`;
-        toast.innerHTML = `<span>${icons[type] || ''}</span> ${message}`;
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.remove('toast-enter');
-            toast.classList.add('toast-exit');
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
-    },
-
-    formatNumber(num) {
-        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-        return num.toString();
-    },
-
-    generateStars(rating) {
-        const full = Math.floor(rating);
-        const empty = 5 - full;
-        return '★'.repeat(full) + '☆'.repeat(empty);
-    },
-
-    getCategoryIcon(category) {
-        const icons = {
-            'Games': '🎮',
-            'Education': '📚',
-            'AI': '🤖',
-            'Business': '💼',
-            'Finance': '💰',
-            'Health': '🏥',
-            'Social': '👥',
-            'Entertainment': '🎬',
-            'Tools': '🛠️',
-            'Photography': '📷',
-            'Shopping': '🛒',
-            'Music': '🎵',
-            'Travel': '✈️',
-            'News': '📰',
-            'Productivity': '⚡'
-        };
-        return icons[category] || '📱';
-    },
-
-    getStatusColor(status) {
-        const colors = {
-            'COMPLETED': 'success',
-            'SUCCESS': 'success',
-            'FAILED': 'failed',
-            'BUILDING': 'building',
-            'QUEUED': 'queued',
-            'CANCELLED': 'cancelled'
-        };
-        return colors[status] || 'queued';
-    },
-
-    getStatusLabel(status) {
-        const labels = {
-            'COMPLETED': '✅ Success',
-            'SUCCESS': '✅ Success',
-            'FAILED': '❌ Failed',
-            'BUILDING': '🔄 Building',
-            'QUEUED': '⏳ Queued',
-            'CANCELLED': '⛔ Cancelled'
-        };
-        return labels[status] || status;
-    },
-
-    truncate(text, length = 80) {
-        if (!text) return '';
-        return text.length > length ? text.substring(0, length) + '...' : text;
+    
+    // Setup global event listeners
+    this.setupEventListeners();
+    
+    // Initialize page based on current URL
+    this.initPage();
+  }
+  
+  async loadUser() {
+    try {
+      const user = await api.auth.me();
+      this.currentUser = user;
+      this.updateUI();
+    } catch (error) {
+      // Token might be expired
+      api.auth.logout();
     }
-};
+  }
+  
+  setupEventListeners() {
+    // Global logout
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.logout-btn')) {
+        this.logout();
+      }
+    });
+    
+    // Global navigation
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[data-nav]');
+      if (link) {
+        e.preventDefault();
+        this.navigate(link.href);
+      }
+    });
+  }
+  
+  async initPage() {
+    const path = window.location.pathname;
+    const page = path.split('/').pop() || 'index.html';
+    
+    try {
+      switch(page) {
+        case 'index.html':
+        case '':
+          await this.showLanding();
+          break;
+        case 'login.html':
+          await this.showLogin();
+          break;
+        case 'signup.html':
+          await this.showSignup();
+          break;
+        case 'users.html':
+          await this.showUserDashboard();
+          break;
+        case 'developers.html':
+          await this.showDeveloperDashboard();
+          break;
+        case 'app.html':
+          await this.showAppDetails();
+          break;
+        case 'search.html':
+          await this.showSearch();
+          break;
+        case 'publish.html':
+          await this.showPublish();
+          break;
+        case 'deploy.html':
+          await this.showDeploy();
+          break;
+        case 'editor.html':
+          await this.showEditor();
+          break;
+        case 'analytics.html':
+          await this.showAnalytics();
+          break;
+        default:
+          console.log('Unknown page:', page);
+      }
+    } catch (error) {
+      console.error('Page init error:', error);
+      this.showError('Failed to load page');
+    }
+  }
+  
+  // Page handlers
+  async showLanding() {
+    // Show featured apps, categories, etc.
+    try {
+      const featured = await api.public.getApps({ featured: true });
+      const categories = await api.public.getCategories();
+      // Render to DOM
+    } catch (error) {
+      console.error('Failed to load landing:', error);
+    }
+  }
+  
+  async showUserDashboard() {
+    if (!this.currentUser || this.currentUser.role !== 'user') {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    try {
+      const dashboard = await api.user.getDashboard();
+      // Render dashboard
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+    }
+  }
+  
+  async showDeveloperDashboard() {
+    if (!this.currentUser || this.currentUser.role !== 'developer') {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    try {
+      const dashboard = await api.developer.getDashboard();
+      // Render developer dashboard
+    } catch (error) {
+      console.error('Failed to load developer dashboard:', error);
+    }
+  }
+  
+  async showAppDetails() {
+    const params = new URLSearchParams(window.location.search);
+    const appId = params.get('id');
+    
+    if (!appId) {
+      window.location.href = '/search.html';
+      return;
+    }
+    
+    try {
+      const app = await api.public.getApp(appId);
+      // Render app details
+    } catch (error) {
+      console.error('Failed to load app:', error);
+    }
+  }
+  
+  async showSearch() {
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q') || '';
+    
+    try {
+      const results = await api.public.search({ q: query });
+      // Render search results
+    } catch (error) {
+      console.error('Search failed:', error);
+    }
+  }
+  
+  async showPublish() {
+    // Show publish form
+  }
+  
+  async showDeploy() {
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('project');
+    
+    if (!projectId) {
+      window.location.href = '/developers.html';
+      return;
+    }
+    
+    // Show deployment interface
+  }
+  
+  async showEditor() {
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('project');
+    const file = params.get('file') || '';
+    
+    if (!projectId) {
+      window.location.href = '/developers.html';
+      return;
+    }
+    
+    // Initialize code editor
+    this.initEditor(projectId, file);
+  }
+  
+  initEditor(projectId, file) {
+    // Implement Monaco editor or similar
+    // This is a placeholder
+    console.log('Editor initialized for project:', projectId);
+  }
+  
+  async showAnalytics() {
+    // Show analytics dashboard
+  }
+  
+  // Utility methods
+  updateUI() {
+    // Update navbar, show/hide elements based on auth
+    const isLoggedIn = !!this.currentUser;
+    document.querySelectorAll('[data-auth]').forEach(el => {
+      el.style.display = isLoggedIn ? 'block' : 'none';
+    });
+    
+    document.querySelectorAll('[data-guest]').forEach(el => {
+      el.style.display = isLoggedIn ? 'none' : 'block';
+    });
+    
+    if (this.currentUser) {
+      // Update user info
+      document.querySelector('[data-username]').textContent = this.currentUser.username;
+    }
+  }
+  
+  logout() {
+    api.auth.logout();
+    this.currentUser = null;
+    this.updateUI();
+    window.location.href = '/index.html';
+  }
+  
+  navigate(url) {
+    window.location.href = url;
+  }
+  
+  showError(message) {
+    // Show error toast/notification
+    console.error('Error:', message);
+  }
+}
 
-// ============================================
-// INITIALIZATION
-// ============================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Any shared initialization can go here
-    console.log('Alpha shared JS loaded.');
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.app = new App();
 });
 
-// Expose globally
-window.Alpha = {
-    CONFIG,
-    state,
-    API,
-    UI
-};
+export default App;
