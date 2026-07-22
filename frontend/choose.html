@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Role - Developer Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <div class="container" style="text-align:center;padding:60px 0;">
+        <div style="margin-bottom:50px;">
+            <a href="index.html">
+                <img src="logo.png" alt="Platform Logo" height="60">
+            </a>
+            <h1 style="font-size:2.5rem;margin-top:20px;">Welcome to the Platform</h1>
+            <p style="font-size:1.2rem;color:var(--gray);">Choose how you want to use the platform</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:40px;max-width:800px;margin:0 auto;">
+            <!-- User Card -->
+            <div class="card" style="padding:40px;cursor:pointer;" onclick="navigateTo('login', { role: 'user' })">
+                <div style="font-size:4rem;margin-bottom:20px;">👤</div>
+                <h2>User</h2>
+                <p style="color:var(--gray);margin:15px 0;">Discover, download, and use amazing applications created by developers</p>
+                <ul style="text-align:left;list-style:none;padding:0;">
+                    <li style="padding:5px 0;">✅ Browse and search apps</li>
+                    <li style="padding:5px 0;">✅ Download and use apps</li>
+                    <li style="padding:5px 0;">✅ Rate and review</li>
+                    <li style="padding:5px 0;">✅ Save favorites</li>
+                </ul>
+                <button class="btn btn-primary" style="margin-top:20px;width:100%;">
+                    Continue as User
+                </button>
+            </div>
+
+            <!-- Developer Card -->
+            <div class="card" style="padding:40px;cursor:pointer;" onclick="navigateTo('login', { role: 'developer' })">
+                <div style="font-size:4rem;margin-bottom:20px;">👨‍💻</div>
+                <h2>Developer</h2>
+                <p style="color:var(--gray);margin:15px 0;">Build, deploy, and publish applications to the platform</p>
+                <ul style="text-align:left;list-style:none;padding:0;">
+                    <li style="padding:5px 0;">✅ Write code online</li>
+                    <li style="padding:5px 0;">✅ One-click deployment</li>
+                    <li style="padding:5px 0;">✅ Publish applications</li>
+                    <li style="padding:5px 0;">✅ Analytics and insights</li>
+                </ul>
+                <button class="btn btn-primary" style="margin-top:20px;width:100%;">
+                    Continue as Developer
+                </button>
+            </div>
+        </div>
+
+        <div style="margin-top:40px;color:var(--gray);">
+            <p>Already have an account? <a href="login.html" style="color:var(--primary);font-weight:600;">Sign In</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        window.navigateTo = (page, params = {}) => {
+            const url = new URL(window.location.href);
+            url.pathname = `/${page}.html`;
+            Object.entries(params).forEach(([key, value]) => {
+                url.searchParams.set(key, value);
+            });
+            window.location.href = url.toString();
+        };
+    </script>
+</body>
+</html>
