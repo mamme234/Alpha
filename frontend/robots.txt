@@ -1,0 +1,71 @@
+# robots.txt
+# Developer Platform - Search Engine Configuration
+
+# Allow all crawlers to access the site
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /editor/
+Disallow: /deploy/
+Disallow: /developers.html
+Disallow: /users.html
+Disallow: /profile.html
+Disallow: /settings.html
+Disallow: /publish.html
+Disallow: /analytics.html
+Disallow: /notifications.html
+
+# Disallow login and signup pages
+Disallow: /login.html
+Disallow: /signup.html
+Disallow: /choose.html
+
+# Allow app pages and search
+Allow: /app.html
+Allow: /search.html
+
+# Sitemap location
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Crawl delay to be gentle on the server
+Crawl-delay: 1
+
+# Host (specify your primary domain)
+Host: https://yourdomain.com
+
+# Specific bot configurations
+User-agent: Googlebot
+Allow: /
+Allow: /app.html
+Allow: /search.html
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Allow: /app.html
+Allow: /search.html
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Twitterbot
+Allow: /
+Allow: /app.html
+Allow: /search.html
+
+# Image bots
+User-agent: Googlebot-Image
+Allow: /
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.svg
+Allow: /*.webp
+
+# Video bots
+User-agent: Googlebot-Video
+Allow: /
+Allow: /*.mp4
+Allow: /*.webm
