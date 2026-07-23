@@ -18,7 +18,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { 
-        origin: config.frontendUrl || 'https://alpha-g2z9.vercel.app',
+        origin: config.frontendUrl || 'https://alpha-steel-ten.vercel.app/',
         credentials: true 
     } 
 });
@@ -29,7 +29,7 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors({ 
-    origin: config.frontendUrl || 'https://alpha-g2z9.vercel.app', 
+    origin: config.frontendUrl || 'https://alpha-steel-ten.vercel.app/', 
     credentials: true 
 }));
 app.use(express.json({ limit: '50mb' }));
